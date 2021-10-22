@@ -352,15 +352,19 @@ server <- function(input, output, session) {
   values[["path"]] <- "wait.png"
   values[["multi"]] <- "wait"
   values[["lonlat"]] <- TRUE
+  values[["silhouetteplot"]] <- NULL
+  values[["labelall"]] <- NULL
+  values[["isLabel"]] <- TRUE
 
   #------------------------------------------------------#
   # Download
   #------------------------------------------------------#
   output$map.png <- downloadHandler(
     filename = "map.png",
-
     content = function(file) {
+      showModal(waitModal())
       mapshot(dlmap$map, file = file)
+      removeModal()
     }
   )
 
@@ -379,7 +383,7 @@ server <- function(input, output, session) {
                     span("We use var to weight the distance and var must be a frequency or density and always positive."),
                     br(),br(),
                     radioButtons("z_select", "Choose data type of your var",
-                                 choices = c(density = "un",
+                                 choices = c(positive = "un",
                                              other = "de"),
                                  selected = "de"),
 
@@ -443,8 +447,9 @@ server <- function(input, output, session) {
                 ),
 
                 # Horizontal line ----
-                h4("Parameters"),hr(style="border-color: #222222;"),
-                fluidRow(
+                hr(style="border-color: #222222;"),
+                actionButton(inputId = "toggle", span(icon("cogs",lib = "font-awesome"),"Settings")),
+                fluidRow(id="myBox",
                   column(width = 5,
                          span(strong("Non-geographic variables.")),
                          sliderTextInput("UniMulti","Your case is:",choices=c("Univariate","Multivariate"),width = "100px"),
@@ -481,7 +486,9 @@ server <- function(input, output, session) {
                                                   "Comma" = ","),
                                       selected = '.')
                   )
-                ),hr(style="border-color: #C6C0AA;"),
+                ),
+                # Horizontal line ----
+                hr(style="border-color: #C6C0AA;"),
                 fluidRow(
                   column(width = 8
                   ),
@@ -541,6 +548,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$UL,{
     showModal(uploadModal())
+    shinyjs::hide("myBox")
     shinyjs::hide("nb_var")
   })
 
@@ -559,7 +567,41 @@ server <- function(input, output, session) {
       values[["nb_var"]] <- input$nb_var
       values[["multi"]] <- input$UniMulti
       values[["lonlat"]] <- input$lonlat
-      removeModal()
+
+      data <- values[["DF"]]
+      multi <- values[["multi"]]
+      lonlat <- values[["lonlat"]]
+
+      if(!is.numeric(data[,1])){
+
+        showNotification("coordinates must be numeric! (Check the decimal character)",type = "warning", duration=15)
+        showModal(uploadModal(failed = TRUE))
+        shinyjs::hide("nb_var")
+      }else{
+        if(!is.numeric(data[,2])){
+
+          showNotification("coordinates must be numeric! (Check the decimal character)",type = "warning", duration=15)
+          showModal(uploadModal(failed = TRUE))
+          shinyjs::hide("nb_var")
+        }else{
+          if(!is.numeric(data[,3])){
+
+            showNotification("variable must be numeric! (Check the decimal character)",type = "warning", duration=15)
+            showModal(uploadModal(failed = TRUE))
+            shinyjs::hide("nb_var")
+          }else{
+            #change data select
+            updateSelectInput(session, "select", selected = 3)
+            removeModal()
+          }
+
+        }
+
+
+      }
+
+
+
     }else{
       showModal(uploadModal(failed = TRUE))
       shinyjs::hide("nb_var")
@@ -602,9 +644,11 @@ server <- function(input, output, session) {
     if(input$UniMulti == "Univariate"){
       if(input$label){
         values[["test"]] <- 4
+        values[["isLabel"]] <- TRUE
         data.frame(coord.1="X",coord.2="Y",var="var",label_optional="label")
       }else{
         values[["test"]] <- 3
+        values[["isLabel"]] <- FALSE
         data.frame(coord.1="X",coord.2="Y",var="var")
       }
 
@@ -612,44 +656,54 @@ server <- function(input, output, session) {
       if(input$nb_var == 2){
         if(input$label){
           values[["test"]] <- 5
+          values[["isLabel"]] <- TRUE
           data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",label_optional="label")
         }else{
           values[["test"]] <- 4
+          values[["isLabel"]] <- FALSE
           data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2")
         }
       }else{
         if(input$nb_var == 3){
           if(input$label){
             values[["test"]] <- 6
+            values[["isLabel"]] <- TRUE
             data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",label_optional="label")
           }else{
             values[["test"]] <- 5
+            values[["isLabel"]] <- FALSE
             data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3")
           }
         }else{
           if(input$nb_var == 4){
             if(input$label){
               values[["test"]] <- 7
+              values[["isLabel"]] <- TRUE
               data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4",label_optional="label")
             }else{
               values[["test"]] <- 6
+              values[["isLabel"]] <- FALSE
               data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4")
             }
           }else{
             if(input$nb_var == 5){
               if(input$label){
                 values[["test"]] <- 8
+                values[["isLabel"]] <- TRUE
                 data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4",var.5="var5",label_optional="label")
               }else{
                 values[["test"]] <- 7
+                values[["isLabel"]] <- FALSE
                 data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4",var.5="var5")
               }
             }else{
               if(input$label){
                 values[["test"]] <- 9
+                values[["isLabel"]] <- TRUE
                 data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4",var.5="var5",var.6="var6",label="label")
               }else{
                 values[["test"]] <- 8
+                values[["isLabel"]] <- FALSE
                 data.frame(coord.1="X",coord.2="Y",var.1="var1",var.2="var2",var.3="var3",var.4="var4",var.5="var5",var.6="var6")
               }
 
@@ -664,8 +718,24 @@ server <- function(input, output, session) {
     }
   )
 
+  observe({
+    if(!values[["isLabel"]]){
+      shinyjs::hide(id = "Plabel")
+    }else{
+      shinyjs::show(id = "Plabel")
+    }
+  })
+
+  observeEvent(input$toggle, {
+    if(input$toggle %% 2 == 0){
+      shinyjs::hide(id = "myBox")
+    }else{
+      shinyjs::show(id = "myBox")
+    }
+  })
+
   #------------------------------------------------------#
-  #  ClustCutMap
+  #  MapClust
   #------------------------------------------------------#
   observe({
     if(input$select==3){
@@ -673,6 +743,59 @@ server <- function(input, output, session) {
         showNotification("Oops ! you forgot a little thing ! To plot your data, you need to follow a few things:
                        You must import your own data! Re Run after import!",type = "warning", duration = 100)
       }
+      if(input$UniMulti == "Univariate"){
+        if(input$label){
+          values[["isLabel"]] <- TRUE
+        }else{
+          values[["isLabel"]] <- FALSE
+        }
+
+      }else{
+        if(input$nb_var == 2){
+          if(input$label){
+            values[["isLabel"]] <- TRUE
+          }else{
+            values[["isLabel"]] <- FALSE
+          }
+        }else{
+          if(input$nb_var == 3){
+            if(input$label){
+              values[["isLabel"]] <- TRUE
+            }else{
+              values[["isLabel"]] <- FALSE
+            }
+          }else{
+            if(input$nb_var == 4){
+              if(input$label){
+                values[["isLabel"]] <- TRUE
+              }else{
+                values[["isLabel"]] <- FALSE
+              }
+            }else{
+              if(input$nb_var == 5){
+                if(input$label){
+                  values[["isLabel"]] <- TRUE
+                }else{
+                  values[["isLabel"]] <- FALSE
+                }
+              }else{
+                if(input$label){
+                  values[["isLabel"]] <- TRUE
+                }else{
+                  values[["isLabel"]] <- FALSE
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+    }else{
+      values[["isLabel"]] <- TRUE
     }
   })
 
@@ -723,7 +846,6 @@ server <- function(input, output, session) {
           OK <- FALSE
           showNotification("coordinates must be numeric!",type = "warning", duration=15)
         }
-        if(OK == TRUE){cat("coord ok\n")}
 
         if(multi == "Multivariate"){
           for(i in 3:(2+values[["nb_var"]])){
@@ -731,16 +853,13 @@ server <- function(input, output, session) {
               OK <- FALSE
               showNotification("variable must be numeric!",type = "warning", duration=15)
             }
-            cat("var",i-2)
           }
-          cat("\n")
         }else{
           if(!is.numeric(data[,3])){
             OK <- FALSE
             showNotification("variable must be numeric!",type = "warning", duration=15)
           }
         }
-        if(OK == TRUE){cat("var ok\n")}
       }
     }
     if(OK == TRUE){
@@ -748,6 +867,8 @@ server <- function(input, output, session) {
       values[["multi2"]] <- multi
       if(input$Plabel==T){Plabel = T}
       if(input$Plabel==F){Plabel = F}
+      if(input$extenddend==T){extenddend = T}
+      if(input$extenddend==F){extenddend = F}
       if(input$select==3 && multi == "Univariate"){
         if(input$z_select=="un"){ctrl="un"}else{ctrl="de"}
       }
@@ -795,7 +916,7 @@ server <- function(input, output, session) {
         }else{
           if(min(Z)<0){
             Z <- transfo_z(Z)
-            showNotification("The data have been changed due to negative value in third col",type="error")
+            showNotification("The var data have been changed due to negative value in third column.",type="error")
           }
         }
         saveZ <- data[,3]
@@ -827,8 +948,16 @@ server <- function(input, output, session) {
 
       label <- as.character(L)
 
-
       id <- c(1:length(data[,1]))
+
+      if(values[["isLabel"]]){
+        values[["labelall"]] <- label
+      }else{
+        values[["labelall"]] <- id
+        label <- as.character(id)
+      }
+
+
       data=cbind(data,id)
       data=as.data.frame(data)
 
@@ -870,8 +999,6 @@ server <- function(input, output, session) {
       if (!(length(unique(data$grp)) <= 1)) {
         showNotification("The maximal value of dlim is not enough to create one patch at the top of the tree.
                          The groups may be merged too early. Try higher bsup.",type = "message", duration = 10)
-        #cat("\nThe maximal value of dlim is not enough to create one patch at the top of the tree.
-        #   The groups may be merged too early. Try higher bsup.\n")
       }
 
       while ( dlim >= binf) {
@@ -1052,31 +1179,49 @@ server <- function(input, output, session) {
       label_avant <- c()
       label_grp <- c()
 
-      for(b in 2:(length(cpy_historique[,1]))){
-        c=b-1
-        if(!(FALSE %in% (historique[b,2:length(historique[1,])]==historique[c,2:length(historique[1,])]))){
-          #Doublon
-          label_tmp <- as.character(cpy_historique[b,1])
-          label_avant <- as.character(cpy_historique[c,1])
-          if(is.null(label_grp)){
-            label_grp <- c(label_avant,label_tmp)
+      if(extenddend){
+
+        for(b in 2:(length(cpy_historique[,1]))){
+          c=b-1
+          if(!(FALSE %in% (historique[b,2:length(historique[1,])]==historique[c,2:length(historique[1,])]))){
+            #Doublon
+            label_tmp <- as.character(cpy_historique[b,1])
+            label_avant <- as.character(cpy_historique[c,1])
+            if(is.null(label_grp)){
+              label_grp <- c(label_avant,label_tmp)
+            }else{
+              label_grp <- c(label_grp,label_avant,label_tmp)
+            }
           }else{
-            label_grp <- c(label_grp,label_avant,label_tmp)
+            #Pas doublon
+            hist<-rbind(hist,historique[c,])
+            label_grp <- c(label_grp,as.character(cpy_historique[c,1]))
+            label_grp <- paste(unique(label_grp), collapse = ".")
+            label_ini_grp<-c(label_ini_grp,label_grp)
+            label_grp <- c()
           }
-        }else{
-          #Pas doublon
-          hist<-rbind(hist,historique[c,])
+        }
+
+        #add the last elt
+        hist<-rbind(hist,historique[length(historique[,1]),])
+        label_grp <- paste(unique(label_grp), collapse = ".")
+        label_ini_grp<-c(label_ini_grp,label_grp)
+
+      }else{
+        #----------------
+        for(b in 2:(length(cpy_historique[,1]))){
+          c=b-1
           label_grp <- c(label_grp,as.character(cpy_historique[c,1]))
-          label_grp <- paste(unique(label_grp), collapse = ".")
           label_ini_grp<-c(label_ini_grp,label_grp)
           label_grp <- c()
         }
+        hist <- historique
+        #add last elt
+        label_grp <- unique(as.character(cpy_historique[length(historique[,1]),1]))
+        label_ini_grp <- c(label_ini_grp,label_grp)
+        #----------------
       }
 
-      #add the last elt
-      hist<-rbind(hist,historique[length(historique[,1]),])
-      label_grp <- paste(unique(label_grp), collapse = ".")
-      label_ini_grp<-c(label_ini_grp,label_grp)
 
       #We cut the label colunms (Not use here because we work on the entire cluster the label and id of
       # each members of one cluster are still save in data)
@@ -1214,6 +1359,7 @@ server <- function(input, output, session) {
       values[["data"]] <- data
 
       output$distPlot <- renderPlot({
+        values[["dendplot"]] <- plot.dend$main + plot.dend$add + plot.dend$add2
         plot.dend$main + plot.dend$add + plot.dend$add2
       })
 
@@ -1222,12 +1368,19 @@ server <- function(input, output, session) {
         dataplot <- t(values[["sil_width"]])
         dataplot <- as.data.frame(dataplot)
         colnames(dataplot) <- c("number_of_groups","Average_Sil_Width")
+        minisil <- min(dataplot$Average_Sil_Width)
+        if(minisil > 0 ){
+          minisil <- 0
+        }else{
+          minisil <- -1
+        }
         plot <- ggplot(data=dataplot, aes(x=number_of_groups, y=Average_Sil_Width))
         plot <- plot + geom_line(linetype = 3)
         plot <- plot +   geom_point(aes(color=Average_Sil_Width), size=3) + scale_colour_gradientn(colours=c("brown1","chartreuse3"))
         plot <- plot +   scale_x_continuous(breaks = dataplot$number_of_groups,
                                             labels = dataplot$number_of_groups )
         plot <- plot +   labs(title = "Average Silhouette Width" , subtitle = "Partition evaluation")
+        plot <- plot + ylim(minisil,1)
         plot <- plot + theme(
           legend.position="bottom",
           plot.background = element_rect(
@@ -1235,6 +1388,7 @@ server <- function(input, output, session) {
             size = 1
           )
         )
+        values[["avesilplot"]] <- plot
         plot
       })
 
@@ -1243,6 +1397,7 @@ server <- function(input, output, session) {
         dataplot <- t(values[["WSS"]])
         dataplot <- as.data.frame(dataplot)
         colnames(dataplot) <- c("number_of_groups","Within_Sum_of_Square")
+        maxwws <- max(dataplot$Within_Sum_of_Square)
         plot <- ggplot(data=dataplot, aes(x=number_of_groups, y=Within_Sum_of_Square))
         plot <- plot + geom_line(linetype = 3)
         plot <- plot + geom_point(aes(color=Within_Sum_of_Square), size=3) + scale_colour_gradientn(colours=c("chartreuse3","brown1"))
@@ -1256,6 +1411,7 @@ server <- function(input, output, session) {
             size = 1
           )
         )
+        values[["WSSplot"]] <- plot
         plot
       })
       removeModal()
@@ -1274,7 +1430,7 @@ server <- function(input, output, session) {
       cat("Hierarchical Divise Clustering")
     }else{
       multi <- values[["multi2"]]
-      cat(multi)
+      cat(multi, " ")
       nb_var <- values[["nb_var"]]
       cat(nb_var)
 
@@ -1361,6 +1517,8 @@ server <- function(input, output, session) {
       cat("  -----------------------------------\n")
     }
   })
+
+
 
   observeEvent(input$Plabel,{
     if(input$Plabel){
@@ -1519,10 +1677,17 @@ server <- function(input, output, session) {
       col2 <- col2[order(col2[,2],decreasing=F), ]
       values[["col"]] <- as.character(col2[,1])
       leafletProxy("mymap", data = data) %>%
-        clearMarkers() %>% clearControls %>%
-        addCircleMarkers(lng = data[,1], lat = data[,2], radius = Size, fillColor =  col,
-                         fill = T, fillOpacity = 0.8, opacity=1, stroke = T,weight = 1.5, color="black", dashArray=C
-        ) %>%
+        clearMarkers() %>% clearControls
+        if(input$Plabel){
+          leafletProxy("mymap", data = data) %>% addCircleMarkers(lng = data[,1], lat =data[,2], popup = ~htmlEscape(values[["labelall"]]), radius = Size, fillColor =  col,
+                                      fill = TRUE, fillOpacity = 0.8, opacity=1, stroke = TRUE,weight = 1.5, color="black", dashArray=C
+          )
+        }else{
+          leafletProxy("mymap", data = data) %>% addCircleMarkers(lng = data[,1], lat = data[,2], radius = Size, fillColor = col,
+                                      fill = TRUE, fillOpacity = 0.8, opacity=1, stroke = TRUE,weight = 1.5, color="black", dashArray=C
+          )
+        }
+        leafletProxy("mymap", data = data) %>%
         fitBounds(lat1 = max(data[,2]), lng1 = max(data[,1]), lat2 = min(data[,2]), lng2 = min(data[,1])
         ) %>%
         addLegend("bottomleft", pal = pal, values = as.factor(type),
@@ -1635,6 +1800,7 @@ server <- function(input, output, session) {
             DiMatrix = values[["DiMatrix"]]
             sil <- silhouette(cluster,DiMatrix)
             plot(sil,col=values[["col"]])
+            values[["silhouetteplot"]] <- sil
           },height = function(){2.5*length(type)})
         }
       }
@@ -1642,5 +1808,22 @@ server <- function(input, output, session) {
       output$silPlot <- renderPlot({},height = 1)
     }
   })
+
+
+
+  #EXPORT BUTTON
+  output$all.pdf <- downloadHandler(
+    filename = "mapclust.pdf",
+    content = function(file) {
+      cairo_pdf(file,onefile=T)
+      print(values[["dendplot"]])
+      print(values[["avesilplot"]])
+      print(values[["WSSplot"]])
+      if(!is.null(values[["silhouetteplot"]])){
+        plot(values[["silhouetteplot"]],col=values[["col"]])
+      }
+      dev.off()
+    }
+  )
 
   }

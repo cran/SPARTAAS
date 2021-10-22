@@ -11,7 +11,7 @@ Longitude, latitude, number of thyroid cancers. The data concern two departments
 M. Karakachoff (IR CHU - l'institut du Thorax INSERM UMR 1087 - CNRS UMR 6291) Nantes, France
 
 F. Molinie (resp. Loire-Atlantique-Vendee cancer registry -
-\href{https://www.santepaysdelaloire.com/registre-des-cancers/}{\code{registre-des-cancers}}) France
+\href{https://www.registre-cancers-44-85.fr/}{\code{registre-des-cancers}}) France
 }
 
 \usage{data("datacancer")}

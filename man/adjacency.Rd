@@ -17,7 +17,7 @@ data frame with 2 columns. The first one contains all the elements (nodes) and t
 }
 }
 \value{
-\item{D }{Normalized connection dissimilarity matrix}
+\item{D }{Dissimilarity matrix base on adjacency.}
 }
 \author{
 A. COULON
@@ -31,14 +31,10 @@ P. HUSI
 ##-- ==>  Define data, use random,
 ##--  or do  help(data=index)  for the standard data sets.
 library(SPARTAAS)
+data(datangkor)
 
 ## network stratigraphic data (Network)
-network <- data.frame(
-  nodes = c("AI09","AI08","AI07","AI06","AI05","AI04","AI03",
-  "AI02","AI01","AO05","AO04","AO03","AO02","AO01","APQR03","APQR02","APQR01"),
-  edges = c("AI08,AI06","AI07","AI04","AI05","AI01","AI03","AI02","","","AO04","AO03",
-  "AO02,AO01","","","APQR02","APQR01","")
-)
+network <- datangkor$stratigraphy
 
 dissimilarity <- adjacency(network)
 dissimilarity

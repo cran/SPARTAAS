@@ -58,7 +58,7 @@ CAdist <- function(df, nPC = NULL, graph = TRUE){
   }
   df.CA <- FactoMineR::CA(df, ncp = nPC, graph = graph)
   dist <- dist(df.CA$row$coord) / max(dist(df.CA$row$coord))
-  return(as.matrix(dist))
+  return(D=as.matrix(dist))
 }
 
 adjacency <- function(network){
@@ -162,10 +162,10 @@ overlap <- function(temporal){
   #[0,2] to [0,1]
   overlap_matrix <- overlap_matrix / 2
   rownames(overlap_matrix) <- colnames(overlap_matrix) <- df[,1]
-  return(overlap_matrix)
+  return(D=overlap_matrix)
 }
 
-perioclust <- hclustcompro <- function(D1,D2,alpha = "EstimateAlphaForMe",k = NULL,title = "notitle", method = "ward.D2") {
+perioclust <- hclustcompro <- function(D1,D2,alpha = "EstimateAlphaForMe",k = NULL,title = "notitle",method = "ward.D2",suppl_plot = TRUE) {
   #===============================================================================
   # CAH CLASSIFICATION USING TWO DIST MATRIX
   #
@@ -175,10 +175,11 @@ perioclust <- hclustcompro <- function(D1,D2,alpha = "EstimateAlphaForMe",k = NU
   # Arguments:
   # D1	      The fisrt distance matrix. Archeological context: Stratigraphic or timerange distance.
   # D2	      The second distance matrix. Archeological context: ceramic distance.
-  # alpha	    The mixing parameter.
+  # alpha	    The mixing parameter
   # k         The number of clusters
   # title	    The title to print on the dendrogram. (optionnal)
   # method    The method to use in hclust (see doc)
+  # suppl_plot Logical for plot the WSS and average sil plot.
   #
   #===============================================================================
 
@@ -311,85 +312,105 @@ perioclust <- hclustcompro <- function(D1,D2,alpha = "EstimateAlphaForMe",k = NU
   n <- length(D[,1])
 
   #wss sil value
-  if(length(D[,1]) > 20){n <- 20}
-  wss <- c()
-  sil <- c()
-  for ( i in 2:(n-1)){
-    cutree <- stats::cutree(tree,i)
-    res <- fpc::cluster.stats(D,cutree)
-    wss <- c(wss,res$within.cluster.ss)
-    sil <- c(sil,res$avg.silwidth)
-  }
-  #wss
-  Within_Sum_of_Square <- rbind(seq(2,(n-1)),wss)
-  color_wss <- elbow_finder(seq(2,(n-1)),wss)
-  dataplot <- t(Within_Sum_of_Square)
-  dataplot <- as.data.frame(dataplot)
-  colnames(dataplot) <- c("Number_of_groups","Within_Sum_of_Square")
-  q <- ggplot2::ggplot(dataplot,aes(x=Number_of_groups, y=Within_Sum_of_Square)) +
-    ggplot2::geom_point(aes(color=color_wss)) +
-    ggplot2::scale_colour_gradientn(colours=c("brown1","chartreuse3")) +
-    ggplot2::geom_line(linetype = 3) +
-    ggplot2::scale_x_continuous(breaks = dataplot$Number_of_groups ,
-                       labels = dataplot$Number_of_groups ) +
-    ylim(0,max(wss)+1) +
-    labs(title = "Within Sum of Square" , subtitle = "Partition evaluation") +
-    ggplot2::theme(legend.position="none")
+  if(suppl_plot){
+    if(length(D[,1]) > 20){n <- 20}
+    wss <- c()
+    sil <- c()
+    for ( i in 2:(n-1)){
+      cutree <- stats::cutree(tree,i)
+      res <- fpc::cluster.stats(D,cutree)
+      wss <- c(wss,res$within.cluster.ss)
+      sil <- c(sil,res$avg.silwidth)
+    }
+    #wss
+    Within_Sum_of_Square <- rbind(seq(2,(n-1)),wss)
+    color_wss <- elbow_finder(seq(2,(n-1)),wss)
+    dataplot <- t(Within_Sum_of_Square)
+    dataplot <- as.data.frame(dataplot)
+    colnames(dataplot) <- c("Number_of_groups","Within_Sum_of_Square")
+    q <- ggplot2::ggplot(dataplot,aes(x=Number_of_groups, y=Within_Sum_of_Square)) +
+      ggplot2::geom_point(aes(color=color_wss)) +
+      ggplot2::scale_colour_gradientn(colours=c("brown1","chartreuse3")) +
+      ggplot2::geom_line(linetype = 3) +
+      ggplot2::scale_x_continuous(breaks = dataplot$Number_of_groups ,
+                                  labels = dataplot$Number_of_groups ) +
+      ylim(0,max(wss)+1) +
+      labs(title = "Within Sum of Square" , subtitle = "Partition evaluation") +
+      ggplot2::theme(legend.position="none")
 
-  #silhouette
-  Average_Sil_Width <- rbind(seq(2,(n-1)),sil)
-  dataplot <- t(Average_Sil_Width)
-  dataplot <- as.data.frame(dataplot)
-  dataplot <- na.omit(dataplot)
-  colnames(dataplot) <- c("Number_of_groups","Average_Sil_Width")
-  p <- ggplot2::ggplot(dataplot,aes(x = Number_of_groups, y = Average_Sil_Width)) +
-    ggplot2::geom_point(aes(color=Average_Sil_Width)) +
-    ggplot2::scale_colour_gradientn(colours=c("brown1","chartreuse3")) +
-    ggplot2::geom_line(linetype = 3) + ylim(0,1) +
-    ggplot2::scale_x_continuous(breaks = dataplot$Number_of_groups,
-                       labels = dataplot$Number_of_groups) +
-    labs(title = "Average Silhouette Width", subtitle = "Partition evaluation") +
-    ggplot2::theme(legend.position="none")
+    #silhouette
+    Average_Sil_Width <- rbind(seq(2,(n-1)),sil)
+    dataplot <- t(Average_Sil_Width)
+    dataplot <- as.data.frame(dataplot)
+    dataplot <- na.omit(dataplot)
+    colnames(dataplot) <- c("Number_of_groups","Average_Sil_Width")
+    p <- ggplot2::ggplot(dataplot,aes(x = Number_of_groups, y = Average_Sil_Width)) +
+      ggplot2::geom_point(aes(color=Average_Sil_Width)) +
+      ggplot2::scale_colour_gradientn(colours=c("brown1","chartreuse3")) +
+      ggplot2::geom_line(linetype = 3) + ylim(0,1) +
+      ggplot2::scale_x_continuous(breaks = dataplot$Number_of_groups,
+                                  labels = dataplot$Number_of_groups) +
+      labs(title = "Average Silhouette Width", subtitle = "Partition evaluation") +
+      ggplot2::theme(legend.position="none")
 
-  # Nouvelle page
-  grid::grid.newpage()
-  # Creer la mise en page : nrow = 2, ncol = 2
-  grid::pushViewport(viewport(layout = grid.layout(2, 2)))
-  # Une fonction pour definir une region dans la mise en page
-  define_region <- function(row, col){
-    grid::viewport(layout.pos.row = row, layout.pos.col = col)
-  }
+    # Nouvelle page
+    grid::grid.newpage()
+    # Creer la mise en page : nrow = 2, ncol = 2
+    grid::pushViewport(viewport(layout = grid.layout(2, 2)))
+    # Une fonction pour definir une region dans la mise en page
+    define_region <- function(row, col){
+      grid::viewport(layout.pos.row = row, layout.pos.col = col)
+    }
 
-  # Arranger les graphiques dans la fenetre
-  hc <- tree
-  hcdata <- ggdendro::dendro_data(tree, type="rectangle")
-  dendrogram <- ggplot2::ggplot() + ggplot2::ggtitle(title) + ylim(-0.2, max(tree$height)) + ylab("height") + xlab("") +
-    ggplot2::geom_segment(data=segment(hcdata), aes(x=x, y=y, xend=xend, yend=yend)) +
-    ggplot2::geom_text(data=label(hcdata), aes(x=x, y=y,label=label,hjust=1,angle=90,fontface="bold",cex=1.5),
-              size=3) +
-    ggplot2::theme(axis.title.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.ticks.x=element_blank())
+    # Arranger les graphiques dans la fenetre
+    hc <- tree
+    hcdata <- ggdendro::dendro_data(tree, type="rectangle")
+    dendrogram <- ggplot2::ggplot() + ggplot2::ggtitle(title) + ylim(-0.2, max(tree$height)) + ylab("height") + xlab("") +
+      ggplot2::geom_segment(data=segment(hcdata), aes(x=x, y=y, xend=xend, yend=yend)) +
+      ggplot2::geom_text(data=label(hcdata), aes(x=x, y=y,label=label,hjust=1,angle=90,fontface="bold",cex=1.5),
+                         size=3) +
+      ggplot2::theme(axis.title.x=element_blank(),
+                     axis.text.x=element_blank(),
+                     axis.ticks.x=element_blank())
 
-  print(dendrogram, vp = define_region(1:2, 1))
-  print(p, vp = define_region(1, 2))
-  print(q, vp = define_region(2, 2))
+    print(dendrogram, vp = define_region(1:2, 1))
+    print(p, vp = define_region(1, 2))
+    print(q, vp = define_region(2, 2))
 
-  if(is.null(k)){
-    if(interactive()){
-      OK <- TRUE
-      while(OK){
-        k <- as.integer(readline("Select the number of clusters:"))
-        if(is.na(k) || k < 1 || k > max){
-          message("must be a integer between 1 and ",max)
-        }else{
-          OK <- FALSE
+    if(is.null(k)){
+      if(interactive()){
+        OK <- TRUE
+        while(OK){
+          k <- as.integer(readline("Select the number of clusters:"))
+          if(is.na(k) || k < 1 || k > max){
+            message("must be a integer between 1 and ",max)
+          }else{
+            OK <- FALSE
+          }
         }
+      }else{
+        stop("No interactive session. Use parameter k to set clusters.")
       }
-    }else{
-      stop("No interactive session. Use parameter k to set clusters.")
+    }
+  }else{
+    if(is.null(k)){
+      plot(tree,h = -1,main = title,sub = subtitle,xlab = paste0("D_alpha, method: \"",method,"\""))
+      if(interactive()){
+        OK <- TRUE
+        while(OK){
+          k <- as.integer(readline("Select the number of clusters:"))
+          if(is.na(k) || k < 1 || k > max){
+            message("must be a integer between 1 and ",max)
+          }else{
+            OK <- FALSE
+          }
+        }
+      }else{
+        stop("No interactive session. Use parameter k to set clusters.")
+      }
     }
   }
+
 
   plot(tree,h = -1,main = title,sub = subtitle,xlab = paste0("D_alpha, method: \"",method,"\""))
   stats::rect.hclust(tree, k = k, border = colorspace::rainbow_hcl(k, c = 80, l = 60, start = 0, end = 360 * (k-1) / k))
@@ -527,7 +548,7 @@ hclustcompro_subdivide <- function(hclustcompro_cl,cluster,nb_class){
   )
 }
 
-seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute = TRUE, col_weight = TRUE){
+seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute = TRUE){
 
   show <- tolower(show)
   SHOWS <- c("both", "frequency", "eppm")
@@ -628,7 +649,7 @@ seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute
     cont <- cont[sort(labels(cont)[[1]]),]
     cont2 <- dplyr::mutate(cont, Cluster = factor(seq))
     cont2 <- dplyr::group_by(cont2, Cluster)
-    cont2 <- dplyr::summarise_all(cont2, funs(sum))
+    cont2 <- dplyr::summarise_all(cont2, list(sum=sum))
     cont2 <- as.data.frame(cont2)
     rownames(cont2) <- cont2[,1]
     cont2 <- cont2[,-1]
@@ -714,7 +735,7 @@ seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute
         }
       }
     }
-    res <- plot_EPPM(cont2,show,permute,col_weight)
+    res <- plot_EPPM(cont2,show,permute)
     return(
       structure(
         list(
@@ -739,10 +760,17 @@ seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute
 
     #order
     if(!is.null(order)){
-      for (i in 1:length(order)){
-        order[i] <- which(rownames(cont2) == order[i])
+      new_order <- rep(NA,length(order))
+
+      for(i in 1:length(order)){
+        new_order[i] <- which(labels(cont2)[[1]] == order[i])
       }
-      cont2 <- cont2[order(as.numeric(order),decreasing = F),]
+      cont2 <- cont2[new_order,]
+
+      #for (i in 1:length(order)){
+      #  order[i] <- which(rownames(cont2) == order[i])
+      #}
+      #cont2 <- cont2[order(as.numeric(order),decreasing = F),]
     }
 
     if(!is.null(insert)){
@@ -820,7 +848,7 @@ seriograph <- function(cont, order = NULL, insert = NULL, show = "both", permute
         }
       }
     }
-    res <- plot_EPPM(cont2,show,permute,col_weight)
+    res <- plot_EPPM(cont2,show,permute)
     return(
       structure(
         list(
@@ -1080,7 +1108,7 @@ print.seriograph <- function(x, ...){
   cat("")
 }
 
-hclustcompro_select_alpha <- function(D1,D2,acc = 2, resampling = TRUE, method = "ward.D2",iter = 5){
+hclustcompro_select_alpha <- function(D1,D2,acc = 2, resampling = TRUE, method = "ward.D2",iter = 5, suppl_plot = TRUE){
 
   #===============================================================================
   # CAH CLASSIFICATION USING TWO DIST MATRIX
@@ -1239,111 +1267,113 @@ hclustcompro_select_alpha <- function(D1,D2,acc = 2, resampling = TRUE, method =
     }
     iter <- length(D1[1,])-1
   }
-  #estime alpha
-  corCrit <- c()
-  for(i in seq(0,1,0.01)){corCrit <- c(corCrit,corCriterion_(i))}
-  index <- which(corCrit == min(corCrit))
-  alpha <- seq(0,1,0.01)[index]
 
-  add_text_resamp <- ""
-  if(resampling){
-    #echantillonnage
-    cat("\nResampling process:\n")
-    pb <- utils::txtProgressBar(min = 0, max = length(D1[1,]), style = 3)
-    set <- c()
-    res <- c()
-    for (i in 1:length(D1[1,])){
-      for(j in sample((1:(length(D1[,1])))[-i],iter,replace=FALSE)){
-        if(i!=j){
-          tmp <- stats::optimize(corCriterion_clone,lower=0,upper=1,a=i,b=j)
-          set <- c(set,tmp$minimum)
+  if(suppl_plot){
+    #estime alpha
+    corCrit <- c()
+    for(i in seq(0,1,0.01)){corCrit <- c(corCrit,corCriterion_(i))}
+    index <- which(corCrit == min(corCrit))
+    alpha <- seq(0,1,0.01)[index]
+
+    add_text_resamp <- ""
+    if(resampling){
+      #echantillonnage
+      cat("\nResampling process:\n")
+      pb <- utils::txtProgressBar(min = 0, max = length(D1[1,]), style = 3)
+      set <- c()
+      res <- c()
+      for (i in 1:length(D1[1,])){
+        for(j in sample((1:(length(D1[,1])))[-i],iter,replace=FALSE)){
+          if(i!=j){
+            tmp <- stats::optimize(corCriterion_clone,lower=0,upper=1,a=i,b=j)
+            set <- c(set,tmp$minimum)
+          }
         }
+        utils::setTxtProgressBar(pb, i)
       }
-      utils::setTxtProgressBar(pb, i)
+
+      res <- set
+      sd <- arrondi(sd(res),acc)
+      box <- quantile(res,c(0,0.025,0.25,0.5,0.75,0.975,1))
+      conf <- c(arrondi(box[2],acc),arrondi(box[6],acc))
+      values <- arrondi(res,acc)
+
+      BoxPlotValue <- boxplot(
+        res,
+        horizontal = TRUE,
+        range = 0,
+        main="boxplot: Distribution of all the potentials values of alpha.",
+        xlab=expression(alpha),
+        xaxt="n"
+      )
+      axis(
+        side = 1,
+        at = c(box[1],box[3],box[4],box[5],box[7]),
+        labels = arrondi(c(box[1],box[3],box[4],box[5],box[7]),acc)
+      )
+      points(arrondi(mean(res),acc),1,col="red")
+      text(arrondi(mean(res),acc),1.3,
+           bquote(hat(alpha)^"*" == .(arrondi(mean(res),acc))))
+      boxplot <- grDevices::recordPlot()
+
+      add_text_resamp <- paste(" The IC95% is calculated with",iter,
+                               "clones out of",length(D1[1,])-1,"available.")
     }
 
-    res <- set
-    sd <- arrondi(sd(res),acc)
-    box <- quantile(res,c(0,0.025,0.25,0.5,0.75,0.975,1))
-    conf <- c(arrondi(box[2],acc),arrondi(box[6],acc))
-    values <- arrondi(res,acc)
 
-    BoxPlotValue <- boxplot(
-      res,
-      horizontal = TRUE,
-      range = 0,
-      main="boxplot: Distribution of all the potentials values of alpha.",
-      xlab=expression(alpha),
-      xaxt="n"
+    plot(
+      corCriterion_,from=0,to=1,
+      xlab = expression(alpha),
+      ylab = expression(CorCrit[alpha]),
+      ylim=c(0,1),
+      axes = TRUE,
+      main = "Select alpha",
+      sub = paste0("method: ",method,".",add_text_resamp),
+      xaxp = c(0,1,5),
+      mgp= c(2, 1,0),
+      col = "slateblue2",
+      xaxt= "n",
+      lwd=1
+    )
+    correlation_curve <- cor_(seq(0,1,.01))
+    lines(seq(0,1,.01),correlation_curve[[1]],lty=3,col="grey60")
+    lines(seq(0,1,.01),correlation_curve[[2]],lty=3,col="grey60")
+    axis(
+      side = 1,
+      at = c(.1,.2,.3,.4,.5,.6,.7,.8,.9),
+      labels = rep("",9),
+      col = "grey"
     )
     axis(
       side = 1,
-      at = c(box[1],box[3],box[4],box[5],box[7]),
-      labels = arrondi(c(box[1],box[3],box[4],box[5],box[7]),acc)
+      at = arrondi(alpha,acc),
+      labels = rep("",length(alpha)),
+      col = "slateblue2"
     )
-    points(arrondi(mean(res),acc),1,col="red")
-    text(arrondi(mean(res),acc),1.3,
-         bquote(hat(alpha)^"*" == .(arrondi(mean(res),acc))))
-    boxplot <- grDevices::recordPlot()
+    if(resampling){
+      axis(
+        side = 1,
+        at = c(0,arrondi(box[2],acc),arrondi(box[6],acc),1),
+        labels = c(0,arrondi(box[2],acc),arrondi(box[6],acc),1)
+      )
+      abline(v = arrondi(box[6],acc),col = "gray50",lty=3,lwd=2)
+      abline(v = arrondi(box[2],acc),col = "gray50",lty=3,lwd=2)
+      close(pb)
+    }else{
+      axis(
+        side = 1,
+        at = c(0,1),
+        labels = c(0,1)
+      )
+    }
 
-    add_text_resamp <- paste(" The IC95% is calculated with",iter,
-                             "clones out of",length(D1[1,])-1,"available.")
-  }
+    for(i in 1:length(alpha)){
+      graphics::mtext(arrondi(alpha[i],acc),side = 1,line = .4,at = arrondi(alpha[i],acc),col = "slateblue2")
+    }
+    alpha.plot <- grDevices::recordPlot()
 
-
-  plot(
-    corCriterion_,from=0,to=1,
-    xlab = expression(alpha),
-    ylab = expression(CorCrit[alpha]),
-    ylim=c(0,1),
-    axes = TRUE,
-    main = "Select alpha",
-    sub = paste0("method: ",method,".",add_text_resamp),
-    xaxp = c(0,1,5),
-    mgp= c(2, 1,0),
-    col = "slateblue2",
-    xaxt= "n",
-    lwd=1
-  )
-  correlation_curve <- cor_(seq(0,1,.01))
-  lines(seq(0,1,.01),correlation_curve[[1]],lty=3,col="grey60")
-  lines(seq(0,1,.01),correlation_curve[[2]],lty=3,col="grey60")
-  axis(
-    side = 1,
-    at = c(.1,.2,.3,.4,.5,.6,.7,.8,.9),
-    labels = rep("",9),
-    col = "grey"
-  )
-  axis(
-    side = 1,
-    at = arrondi(alpha,acc),
-    labels = rep("",length(alpha)),
-    col = "slateblue2"
-  )
-  if(resampling){
-    axis(
-      side = 1,
-      at = c(0,arrondi(box[2],acc),arrondi(box[6],acc),1),
-      labels = c(0,arrondi(box[2],acc),arrondi(box[6],acc),1)
-    )
-    abline(v = arrondi(box[6],acc),col = "gray50",lty=3,lwd=2)
-    abline(v = arrondi(box[2],acc),col = "gray50",lty=3,lwd=2)
-    close(pb)
-  }else{
-    axis(
-      side = 1,
-      at = c(0,1),
-      labels = c(0,1)
-    )
-  }
-
-  for(i in 1:length(alpha)){
-    graphics::mtext(arrondi(alpha[i],acc),side = 1,line = .4,at = arrondi(alpha[i],acc),col = "slateblue2")
-  }
-  alpha.plot <- grDevices::recordPlot()
-
-  if(resampling){
-    return(structure(
+    if(resampling){
+      return(structure(
         list(alpha = arrondi(alpha,acc),
              alpha.plot = alpha.plot,
              sd = sd,
@@ -1353,32 +1383,54 @@ hclustcompro_select_alpha <- function(D1,D2,acc = 2, resampling = TRUE, method =
         ),
         class = c("selectAlpha_obj","list")
       )
-    )
-  }else{
-    return(structure(
+      )
+    }else{
+      return(structure(
         list(alpha = arrondi(alpha,acc),
              alpha.plot = alpha.plot,
              more = "Need resampling = TRUE!"
         ),
         class = c("selectAlpha_obj","list")
       )
+      )
+    }
+  }else{
+
+    #estime alpha
+    #alpha <- stats::optimize(corCriterion_,lower=0,upper=1)$minimum
+    corCrit <- c()
+    for(i in seq(0,1,0.01)){corCrit <- c(corCrit,corCriterion_(i))}
+    index <- which(corCrit == min(corCrit))
+    alpha <- seq(0,1,0.01)[index]
+
+    return(structure(
+      list(alpha = arrondi(alpha,acc),
+           more = "Need suppl_plot = FALSE!"
+      ),
+      class = c("selectAlpha_obj","list")
+    )
     )
   }
+
+
 }
 
-timerange <- function(data, cluster = NULL, add = NULL, density = NULL, color = NULL, reorder_color = FALSE){
+timerange <- function(data, cluster = NULL, add = NULL, density = NULL, color = NULL, reorder = FALSE){
 
   #test
-  if(is.null(cluster)){cluster <- rep(1,dim(df)[1])}
+  if(is.null(cluster)){cluster <- rep(1,dim(data)[1])}
   if(!is.data.frame(data)){stop("data must be a data.frame.")}
   if(!is.null(add)){
     if(!is.data.frame(add)){stop("add must be a data.frame (even if there is only one column).")}
   }
   if(!is.vector(cluster)){stop("cluster must be a vector.")}
+  if(!is.null(density)){
+    if(!is.vector(density)){stop("cluster must be a vector.")}
+  }
 
   #call fonction overlap plot
   df <- cbind(data,cluster)
-  res <- overlap_plot(df,add,density,color,reorder_color = reorder_color)
+  res <- overlap_plot(df,add,density,color,reorder_color = reorder)
 
   return(structure(list(order = res$order, plot = res$plot, density = res$density, cluster = res$reorder_cluster), class = c("temp_obj", "list")))
 }
@@ -1593,10 +1645,17 @@ hclust <- function(d, method = "complete", members = NULL, d2 = NULL, alpha = NU
       alpha <- sa$alpha[1]
     }
     alpha <- as.numeric(alpha)
-    if(!(alpha>0 & alpha<1)){
-      warning("Alpha must be between 0 and 1.")
+    if(!(alpha>=0 & alpha<=1)){
+      warning("alpha must be between 0 and 1.")
       sa <- hclustcompro_select_alpha(d, d2, method = method, resampling = FALSE)
       alpha <- sa$alpha[1]
+    }
+    #normalization
+    if(max(d) != 0){
+      d <- d / max(d)
+    }
+    if(max(d2) != 0){
+      d2 <- d2 / max(d2)
     }
     d <- as.dist(alpha * d + (1 - alpha) * d2)
   }

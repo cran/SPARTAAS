@@ -9,6 +9,7 @@ library(ape)          #for Moran.i
 library(ks)           #for kde Hscv
 library("shinyWidgets")
 library(mapview)      #mapshot
+library(htmltools)
 
 load(file = "./data/datarcheo.RData")
 load(file = "./data/datacancer.RData")
@@ -16,23 +17,37 @@ load(file = "./data/datacancer.RData")
 #----------------------------------------------------------------------------------------------#
 ###########################                  - UI -                  ###########################
 #----------------------------------------------------------------------------------------------#
-ui <- fluidPage(useShinyjs(),style="padding-top: 105px;",
+ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("flatly"),
                 tags$head(
-                  tags$title("MapClust!")
+                  tags$title("mapclust")
                 ),
                 tags$head(tags$style(
                   type = "text/css",
                   ".leaflet-left {
                     bottom:30px;
+                  }
+                  .btn-default {
+                    background-color:#5da3a8;
+                    border-color:#5da3a8;
+                  }
+                  .dropdown-menu li a{
+                    background-color:#fff;
+                    border-color:#dce4ec;
                   }"
                 )),
                 #header
                 absolutePanel(class = "panel panel-default",
-                              style="z-index: 2000;padding: 8px; border-bottom: 1px solid #CCC; background: #fff;opacity: 1;",
+                              style="z-index: 2000;padding: 8px; background: #ecf0f1; opacity: 1;border-bottom: 1px solid #2c3e50;",
                               top = 0, left = 0, right = 0,
                               fixed = TRUE,
-                              titlePanel(h2("Hierarchical Clustering using Spatials Patches")),
-                              div(span(strong("SPARTAAS | MapClust ")),span("v0.9.19-5 ",style ="font-size:14px;"))
+                              titlePanel(h2("Divisive Hierarchical Clustering using Spatials Patches")),
+                              div(span(strong("SPARTAAS | MapClust ")),span("v1.0 ",style ="font-size:14px;"))
+                ),
+                #footer
+                absolutePanel(style="z-index: 2000;padding: 0px; border-bottom: 0px solid #CCC; background: #fff;opacity: 1;",
+                              bottom = 0, left = 0,
+                              fixed = TRUE,
+                              div(span(strong("SPARTAAS")),span("[Bellanger,Coulon,Husi]",style ="font-size:14px;"))
                 ),
                 #go top panel
                 absolutePanel(class = "panel-hover",
@@ -52,13 +67,13 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 105px;",
                                     br(),
                                     sidebarLayout(
                                       #-----------------------------------#
-                                      sidebarPanel(style="border-top-width:20px;border-color:#222222;",
-                                                   h1("Package version:"),
+                                      sidebarPanel(style="border-width:0px;border-color:#222222;",
+                                                   h1("R Package:"),
                                                    br(),
-                                                   h3("If you are interested you can install our R package avaible on the CRAN and on framagit."),
-                                                   span("This version offers you more flexibility"),
-                                                   br(),span("CRAN:"),br(),span("https://R-project/CRAN/mapclust"),br(),
-                                                   span("Framagit:"),br(),span("https://framagit.org/arcoul/mapclust")
+                                                   HTML("<p>This method is part of the <a href='https://spartaas.frama.io/r-package/index.html'>SPARTAAS</a> package.</p>
+                                                        <p>If you are interested you can install our R package avaible on the <a href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
+
+                                                        ")
 
                                       ),
                                       #-----------------------------------#
@@ -92,21 +107,33 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 105px;",
                            tabPanel(value = "2",span(icon("map"),strong("MapClust")),style="max-width:1200px;",
                                     h1("MapClust"),
                                     sidebarLayout(
-                                      sidebarPanel(width = 5,style="border-top-width:20px;border-color:#222222;",
+                                      sidebarPanel(width = 5,style="border-width:0px;border-color:#222222;",
                                                    wellPanel(width = 5, style="border-width:0px;",
                                                              selectInput("select", label = h4("Dataset:"),
                                                                          choices = list("datarcheo" = 1, "datacancer" = 2, "your data" = 3),
                                                                          selected = 1),
                                                              checkboxInput("Plabel","Print the list of names on the dendrogram.", value = FALSE),
+                                                             checkboxInput("extenddend","Merge the leaves located at the same level on the dendrogram (activate before running the method: play button).", value = FALSE),
                                                              hr(style="border-color: #222222;"),
                                                              fluidRow(
-                                                               column(width = 4,
+                                                               column(width = 3,
                                                                       h4("Run:"),
                                                                       actionButton("Run",icon("play", lib = "glyphicon"))
                                                                ),
                                                                column(width = 6,
                                                                       h4("Import data:"),
                                                                       actionButton("UL",icon("import", lib = "glyphicon"))
+                                                               ),
+                                                               column(width = 1,
+                                                                      h4("Export:"),
+                                                                      dropdownButton(
+                                                                        downloadButton("all.pdf","Download plots as pdf"),
+                                                                        hr(style="border-color: #222222;"),
+                                                                        downloadButton("map.png", "Download map as png"),
+                                                                        icon = icon("floppy-disk", lib = "glyphicon"), width = "220px",
+                                                                        size = "sm",
+                                                                        tooltip = tooltipOptions(title = "Download")
+                                                                      )
                                                                )
                                                              )
                                                    ),hr(style="border-color: #222222;border-width:2px;"),
@@ -128,7 +155,6 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 105px;",
                                                 h4("Map"),
                                                 hr(style="border-color: #222222;"),
                                                 leafletOutput("mymap",height = 500),br(),
-                                                downloadButton("map.png", label = "Download map"),
                                                 h4("Silhouette"),
                                                 hr(style="border-color: #222222;"),
                                                 plotOutput("silPlot",height = "auto"),
@@ -146,7 +172,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 105px;",
                                        .carte{
                                        border-left-width: 4px;
                                        border-left-style:solid;
-                                       border-color: coral;
+                                       border-color: #2ac0a2;
                                        padding-left: 10px;
                                        }
                                        </style>
@@ -239,6 +265,7 @@ write.table(data,file=\"path/to/name_file.csv\",sep=\";\",dec=\".\",row.names=FA
 <p>The import interface allows you to setup this values with the \"header\", \"decimal\", \"separator\" and \"quote\" option.</p>
 <p>In order to compute exactly as you want we need to know some things. The first one is the presence or not of label in your data. The label have to be in the last colunm. We also need to know how many of variable of interest you have in addition of the two coordinates variables.</p>
 <p>If the setup don't match with your real data frame you will not be able to import anything. You have to change the data or the parameters. When it was good a green check icon will appear if not you will see a red cross.</p>
+<p><img src=\"GS/importsetting.png\"></p>
 <h4 id=\"label\">Label</h4>
 <p>Yes or not option. Do you have labels in your data ? If you have labels you have to put them on the last colunms.</p>
 <h4 id=\"header\">Header</h4>
@@ -306,23 +333,6 @@ write.table(data,file=\"path/to/name_file.csv\",sep=\";\",dec=\".\",row.names=FA
 
                                       "
                                     )
-                                    ),
-                           #-----------------------------------#
-                           #    Community
-                           #-----------------------------------#
-                           tabPanel(value = "7",span(icon("globe", lib = "glyphicon"),strong("Community")),style="max-width:1200px;",
-                                    h1("Thank you for using MapClust !"),
-                                    p("Lorem ipsum dolor sit amet, consectetur adipisicing elit,
-                                      sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                      Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-                                      ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehender
-                                      it in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
-                                      sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
-                                      anim id est laborum."),
-                                    h4("Shiny Package by Rstudio"),
-                                    code("https://shiny.rstudio.com/"),br(),
-                                    img(src = "my_image_2.png", height = 40),br(),
-                                    code("https://www.rstudio.com/")
                                     )
                            )
                            )

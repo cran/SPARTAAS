@@ -15,7 +15,7 @@ timerange(
   add = NULL,
   density = NULL,
   color = NULL,
-  reorder_color = FALSE
+  reorder = FALSE
 )
 }
 
@@ -31,9 +31,9 @@ data.frame of information to display on hover.}
   \item{density}{
 vector of the density for each observation.}
   \item{color}{
-vector of the color for each cluster.}
-  \item{reorder_color}{
-Logical for reorder the color.}
+vector of the color. if you want the colors to correspond to something other than clusters. Character vector of the same length as the number of observations}
+  \item{reorder}{
+Logical for reorder the color. If TRUE, the first color is for the leftmost cluster on the graph. If FALSE, the first color is for cluster number 1, wherever it is..}
 }
 
 \value{

@@ -104,9 +104,19 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
   labels <- factor(rownames(x),levels = rev(unique(rownames(x))))
   #permute type in x
   if(permute){
-    i <- seq(nrow(x),1)
-    barycenter <- colSums(x * i) / colSums(x)
-    x <- x[,order(barycenter)]
+
+    if(show == "EPPM"){
+      ecart <- as.data.frame(EPM(x))
+      ecart[ecart < 0] <- 0
+      i <- seq(nrow(ecart),1)
+      barycenter <- colSums(ecart * i) / colSums(ecart)
+      x <- x[,order(barycenter)]
+    }else{
+      i <- seq(nrow(x),1)
+      barycenter <- colSums(x * i) / colSums(x)
+      x <- x[,order(barycenter)]
+    }
+
   }
   rowsum <- rowSums(x)
   #add Weight to x
@@ -142,48 +152,27 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
 
   #color for Weight
   tmp <- data$frequency[data$type == "Weight"]
-  levels(data$legend) <- c(levels(data$legend),"1","2","3","4","5","6","7","8","9","10")
-  data$legend[data$type == "Weight"] <- "1"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.1)] <-  "2"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.2)] <-  "3"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.3)] <-  "4"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.4)] <-  "5"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.5)] <-  "6"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.6)] <-  "7"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.7)] <-  "8"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.8)] <-  "9"
-  data$legend[data$type == "Weight" & abs(data$frequency) > quantile(abs(tmp),.9)] <- "10"
+  levels(data$legend) <- c(levels(data$legend),"1","2","3","4","5","6","7","8","9","10","Weight")
+  data$legend[data$type == "Weight"] <- "Weight"
 
-  if(col_Weight){
-    #color for the Weight (red to green) ~ confidence
-    l <- data$legend[data$type == "Weight"]
-    min <- as.character(min(as.numeric(as.character(l))))
-    max <- as.character(max(as.numeric(as.character(l))))
-    my_palette <- colorRampPalette(c("#D85B60", "#78BF5C")) (n = length(unique(data$legend))-2)
-    breaks <- c("frequency","EPPM",min,max)
-    lab <- c("frequency","EPPM","minimal confidence","maximal confidence")
-  }else{
-    #color for the Weight (grey)
-    my_palette <- colorRampPalette(c("grey50")) (n = length(unique(data$legend))-2)
-    breaks <- c("frequency","EPPM","1")
-    lab <- c("frequency","EPPM","Weight")
-  }
+  breaks <- c("frequency","EPPM","Weight")
 
   #define the color
   if(show == "frequency"){
-    color <- c("grey", "grey", my_palette)
+    color <- c("frequency"="#bebebe","EPPM"="#bebebe","Weight"="#7f7f7f")
     #remove EPPM from legend
-    breaks <- breaks[-2]
-    lab <- lab[-2]
+    breaks <- c("frequency","Weight")
+    default_col <- "#bebebe"
   }else{
     if(show == "EPPM"){
-      color <- c("#ebebeb", "black", my_palette)
+      color <- c("frequency"=NA,"EPPM"="black","Weight"="#7f7f7f")
       #remove frequency from legend
-      breaks <- breaks[-1]
-      lab <- lab[-1]
+      breaks <- c("EPPM","Weight")
+      default_col <- NA
     }else{
-      #default color grey: frequency, black: EPPM, my_palette: Weight
-      color <- c("grey", "black",my_palette)
+      #default color grey: frequency, black: EPPM, my_palette: weight
+      color <- c("frequency"="#bebebe","EPPM"="black","Weight"="#7f7f7f")
+      default_col <- NA
     }
   }
   contingency <- x[,1:(length(x[1,])-1)]
@@ -205,13 +194,14 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
     scale_x_discrete(labels = rev(rownames(x))) +
     coord_flip() +
     scale_fill_manual(values = color,
-                      breaks = breaks,
-                      labels = lab
+                      aesthetics = "fill",
+                      limits = breaks,
+                      na.value = default_col
     ) +
     scale_y_continuous(breaks = c(-.1,.1),labels = c("","20% ")) +
     labs(
       title = "Seriograph",
-      subtitle = "EPPM (Ecart Positif au Pourcentage Moyen) Positive Deviation at Average Percentage",
+      subtitle = "EPPM (Ecart Positif au Pourcentage Moyen) Positive Deviation from the Average Percentage",
       caption = "Warnings: The frequencies are calculated independently for each element (row).
 You can see the relative number of observations in the Weight column"
     ) + geom_segment(aes(x = 0, y = -.04, xend = 0, yend = .04),linetype = "blank") +
@@ -239,7 +229,7 @@ You can see the relative number of observations in the Weight column"
 overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color = FALSE){
   if(!is.null(color)){
     change_color <- TRUE
-    save_color <- color
+    save_color <- as.character(color)
   }else{
     change_color <- FALSE
   }
@@ -258,6 +248,7 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
   Upper_bound <- NULL
   Observations <- NULL
   lower_median <- NULL
+
   Cluster <- df[,4]
 
   if(is.numeric(Cluster)){
@@ -530,8 +521,8 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
         add_segments(x = df$Observations, xend = df$Observations,
                      y = df$Lower_bound, yend = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2),
                      showlegend = T, color = save_color, colors = color,
-                     name=paste("Class", name),
-                     legendgroup = paste("Class", name),
+                     name=paste("Cluster", name),
+                     legendgroup = paste("Cluster", name),
                      hoverinfo = 'text',
                      text = paste("</br> Observation :", df$Observations,
                                   "</br> Lower bound :", df$Lower_bound,
@@ -542,7 +533,7 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
         add_segments(x = df$Observations, xend = df$Observations,
                      y =  df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2), yend = df$Upper_bound,
                      showlegend = F, color = save_color, colors = color,
-                     legendgroup = paste("Class", name),
+                     legendgroup = paste("Cluster", name),
                      hoverinfo = 'text',
                      text = paste("</br> Observation :", df$Observations,
                                   "</br> Lower bound :", df$Lower_bound,
@@ -573,13 +564,13 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
 
       p <- p %>%
         layout(shapes = c(a,b,c,d),
-               title = "Periodization of observations by classes",
+               title = "Timerange",
                yaxis = list(title = "Years",zeroline = FALSE),
                xaxis = list(title = "Observations")
         )
       plot <- p
-      if(is.null(density)){
-      }else{
+      if(!is.null(density)){
+        save_dens <- df$density
         df$density <- df$density / sum(df$density)
 
         line <- function(x0, x1, y0, y1, color = "#666666",width = 2){
@@ -591,9 +582,9 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
           return(l)
         }
 
-        l <- line(x0 = df$Observations[1:(length(df$density)-1)],
+        l <- line(x0 = 0:(length(df$density)-2),
                   y0 = df$density[1:(length(df$density)-1)],
-                  x1 = df$Observations[2:length(df$density)],
+                  x1 = 1:(length(df$density)-1),
                   y1 = df$density[2:length(df$density)],
                   color = "#E16A86",width = 2.5)
 
@@ -601,7 +592,8 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
           add_markers(x = df$Observation, y = df$density, showlegend = F,
                       hoverinfo = 'text', color = I("#E16A86"), marker = list(size = 2),
                       hovertext = paste("</br> Observation :", df$Observations,
-                                        "</br> Density :", arrondi(df$density,3),
+                                        "</br> Proportion :", arrondi(df$density,3),
+                                        "</br> Variable :", arrondi(save_dens,3),
                                         df$add_text)
           ) %>%
           layout(shapes=c(a,b,l))
@@ -611,7 +603,7 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
         plot <- subplot(
           p,q,nrows = 2, heights = c(0.7,0.3),shareX = TRUE, shareY = FALSE,titleY = TRUE
         ) %>%
-          layout(title = "Periodization of observations by classes",
+          layout(title = "Periodization of observations by clusters",
                  yaxis = list(title="Years",zeroline = FALSE),
                  yaxis2 = list(title="Density"),
                  xaxis = list(title = "Observations")
@@ -735,19 +727,7 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
   }
 
 
-  if(nb_cluster > 1){
-    a = vlinebis(c(-.5,intersection_place,length(levels(df$Observation))-.5))
-    b = line(x0 = intersection$x_min, x1 = intersection$x_max,
-             y0 = intersection$borne_inf, y1 = intersection$borne_inf)
-    c = line(x0 = intersection$x_min, x1 = intersection$x_max,
-             y0 = intersection$borne_sup, y1 = intersection$borne_sup)
-  }else{
-    a = vlinebis(c(-.5,length(levels(df$Observation))-.5))
-    b = line(x0 = intersection$x_min, x1 = intersection$x_max,
-             y0 = intersection$borne_inf, y1 = intersection$borne_inf)
-    c = line(x0 = intersection$x_min, x1 = intersection$x_max,
-             y0 = intersection$borne_sup, y1 = intersection$borne_sup)
-  }
+
 
   #on définit les axes
   ay <- list(
@@ -800,55 +780,91 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
   }
 
   #on affiche le plot
-  p = plot_ly(df) %>%
-    add_segments(x = df$Observations, xend = df$Observations,
-                 y = df$Lower_bound, yend = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2),
-                 showlegend = T, color = save_color, colors = color, name=paste("Class", name),
-                 legendgroup = paste("Class", name),
-                 hoverinfo = 'text',
-                 text = paste("</br> Observation :", df$Observations,
-                              "</br> Lower bound :", df$Lower_bound,
-                              "</br> Upper bound :", df$Upper_bound,
-                              "</br> Cluster :", Int2Alpha(as.numeric(as.character(df$Cluster))),
-                              df$add_text
-                 )) %>%
-    add_segments(x = df$Observations, xend = df$Observations,
-                 y = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2), yend = df$Upper_bound,
-                 showlegend = F, color = save_color, colors = color,
-                 legendgroup = paste("Class", name),
-                 hoverinfo = 'text',
-                 text = paste("</br> Observation :", df$Observations,
-                              "</br> Lower bound :", df$Lower_bound,
-                              "</br> Upper bound :", df$Upper_bound,
-                              "</br> Cluster :", Int2Alpha(as.numeric(as.character(df$Cluster))),
-                              df$add_text
-                 )) %>%
-    add_markers(x = intersection$First_observations, y = intersection$borne_inf,
-                color = I('#666666'), marker = list(size = 0.01),
-                hoverinfo = "text", showlegend = F,
-                text = paste("</br> Interval : [", intersection$borne_inf,
-                             ", ", intersection$borne_sup, "]", sep = "")) %>%
-    add_markers(x = intersection$First_observations, y = intersection$borne_sup,
-                color = I('#666666'), marker = list(size = 0.01),
-                hoverinfo = "text", showlegend = F,
-                text = paste("</br> Interval : [", intersection$borne_inf,
-                             ", ", intersection$borne_sup, "]", sep = "")) %>%
-    add_markers(x = intersection$Last_observations, y = intersection$borne_inf,
-                color = I('#666666'), marker = list(size = 0.01),
-                hoverinfo = "text", showlegend = F,
-                text = paste("</br> Interval : [", intersection$borne_inf,
-                             ", ", intersection$borne_sup, "]", sep = "")) %>%
-    add_markers(x = intersection$Last_observations, y = intersection$borne_sup,
-                color = I('#666666'), marker = list(size = 0.01),
-                hoverinfo = "text", showlegend = F,
-                text = paste("</br> Interval : [", intersection$borne_inf,
-                             ", ", intersection$borne_sup, "]", sep = ""))
+  if(nb_cluster > 1){
 
-  p <- p %>%
-  layout(shapes = c(a,b,c))
-  plot <- p
-  if(is.null(density)){
+    a = vlinebis(c(-.5,intersection_place,length(levels(df$Observation))-.5))
+    b = line(x0 = intersection$x_min, x1 = intersection$x_max,
+             y0 = intersection$borne_inf, y1 = intersection$borne_inf)
+    c = line(x0 = intersection$x_min, x1 = intersection$x_max,
+             y0 = intersection$borne_sup, y1 = intersection$borne_sup)
+
+    Cl <- save_color
+    p = plot_ly(df) %>%
+      add_segments(x = df$Observations, xend = df$Observations,
+                   y = df$Lower_bound, yend = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2),
+                   showlegend = T, color = save_color, colors = color, name=paste("Cluster", name),
+                   legendgroup = paste("Cluster", name),
+                   hoverinfo = 'text',
+                   text = paste("</br> Observation :", df$Observations,
+                                "</br> Lower bound :", df$Lower_bound,
+                                "</br> Upper bound :", df$Upper_bound,
+                                "</br> Cluster :", Int2Alpha(as.numeric(as.character(df$Cluster))),
+                                df$add_text
+                   )) %>%
+      add_segments(x = df$Observations, xend = df$Observations,
+                   y = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2), yend = df$Upper_bound,
+                   showlegend = F, color = save_color, colors = color,
+                   legendgroup = paste("Cluster", name),
+                   hoverinfo = 'text',
+                   text = paste("</br> Observation :", df$Observations,
+                                "</br> Lower bound :", df$Lower_bound,
+                                "</br> Upper bound :", df$Upper_bound,
+                                "</br> Cluster :", Int2Alpha(as.numeric(as.character(df$Cluster))),
+                                df$add_text
+                   )) %>%
+      add_markers(x = intersection$First_observations, y = intersection$borne_inf,
+                  color = I('#666666'), marker = list(size = 0.01),
+                  hoverinfo = "text", showlegend = F,
+                  text = paste("</br> Interval : [", intersection$borne_inf,
+                               ", ", intersection$borne_sup, "]", sep = "")) %>%
+      add_markers(x = intersection$First_observations, y = intersection$borne_sup,
+                  color = I('#666666'), marker = list(size = 0.01),
+                  hoverinfo = "text", showlegend = F,
+                  text = paste("</br> Interval : [", intersection$borne_inf,
+                               ", ", intersection$borne_sup, "]", sep = "")) %>%
+      add_markers(x = intersection$Last_observations, y = intersection$borne_inf,
+                  color = I('#666666'), marker = list(size = 0.01),
+                  hoverinfo = "text", showlegend = F,
+                  text = paste("</br> Interval : [", intersection$borne_inf,
+                               ", ", intersection$borne_sup, "]", sep = "")) %>%
+      add_markers(x = intersection$Last_observations, y = intersection$borne_sup,
+                  color = I('#666666'), marker = list(size = 0.01),
+                  hoverinfo = "text", showlegend = F,
+                  text = paste("</br> Interval : [", intersection$borne_inf,
+                               ", ", intersection$borne_sup, "]", sep = "")) %>%
+      layout(shapes = c(a,b,c))
   }else{
+
+    a = vlinebis(c(-.5,length(levels(df$Observation))-.5))
+
+    Cl <- NULL
+    p = plot_ly(df) %>%
+      add_segments(x = df$Observations, xend = df$Observations,
+                   y = df$Lower_bound, yend = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2),
+                   showlegend = T, color = save_color, colors = color, name=paste("Cluster", name),
+                   legendgroup = paste("Cluster", name),
+                   hoverinfo = 'text',
+                   text = paste("</br> Observation :", df$Observations,
+                                "</br> Lower bound :", df$Lower_bound,
+                                "</br> Upper bound :", df$Upper_bound,
+                                df$add_text
+                   )) %>%
+      add_segments(x = df$Observations, xend = df$Observations,
+                   y = df$Lower_bound + ((df$Upper_bound - df$Lower_bound)/2), yend = df$Upper_bound,
+                   showlegend = F, color = save_color, colors = color,
+                   legendgroup = paste("Cluster", name),
+                   hoverinfo = 'text',
+                   text = paste("</br> Observation :", df$Observations,
+                                "</br> Lower bound :", df$Lower_bound,
+                                "</br> Upper bound :", df$Upper_bound,
+                                df$add_text
+                   )) %>%
+      layout(shapes = c(a))
+  }
+
+  plot <- p
+  if(!is.null(density)){
+    save_dens <- df$density
     df$density <- df$density / sum(df$density)
 
     line <- function(x0, x1, y0, y1, color = "#666666",width = 2){
@@ -860,9 +876,9 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
       return(l)
     }
 
-    l <- line(x0 = df$Observations[1:(length(df$density)-1)],
+    l <- line(x0 = 0:(length(df$density)-2),
               y0 = df$density[1:(length(df$density)-1)],
-              x1 = df$Observations[2:length(df$density)],
+              x1 = 1:(length(df$density)-1),
               y1 = df$density[2:length(df$density)],
               color = "#E16A86",width = 2.5)
 
@@ -870,15 +886,16 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
       add_markers(x = df$Observation, y = df$density, showlegend = F,
                   hoverinfo = 'text', color = I("#E16A86"), marker = list(size = 2),
                   hovertext = paste("</br> Observation :", df$Observations,
-                                    "</br> Density :", arrondi(df$density,3),
+                                    "</br> Proportion :", arrondi(df$density,3),
+                                    "</br> Variable :", arrondi(save_dens,3),
                                     df$add_text)
                   ) %>%
-      layout(shapes = c(a,l))
+      layout(shapes = na.omit(c(a,l)))
 
     plot <- subplot(
-      p,q,nrows = 2, heights = c(0.7,0.3), shareX = TRUE, shareY = FALSE
+      p,q, nrows = 2, heights = c(0.7,0.3), shareX = TRUE, shareY = FALSE
       ) %>%
-      layout(title = "Periodization of observations by classes",
+      layout(title = "Timerange",
              yaxis = list(title = "Years",zeroline = FALSE),
              yaxis2 = list(title="Density"),
              xaxis = list(title = "Observations")
@@ -887,7 +904,7 @@ overlap_plot <- function(df,add=NULL,density = NULL, color = NULL, reorder_color
     names(density) <- df$Observation
   }
 
-  return(structure(list(order = order, density = density, plot = plot, reorder_cluster = save_color),
+  return(structure(list(order = order, density = density, plot = plot, reorder_cluster = Cl),
                    class = c("temp_obj", "list")))
 }
 

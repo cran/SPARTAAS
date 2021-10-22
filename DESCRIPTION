@@ -1,7 +1,7 @@
 Package: SPARTAAS
 Type: Package
 Title: Statistical Methods for Archaeology
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(person("Lise","Bellanger", role = "aut",
                      email = "lise.bellanger@univ-nantes.fr"),
              person("Philippe","Husi", role = "aut",
@@ -15,24 +15,25 @@ Maintainer: Arthur Coulon <arthur-coulon@outlook.fr>
 Description: Statistical pattern recognition and dating using archaeological artefacts assemblages.
     Package of statistical tools for archaeology.
     hclustcompro(perioclust): Bellanger Lise, Coulon Arthur, Husi Philippe (2020, ISBN:978-3-030-60103-4).
-    seriograph: Bruno Desachy (2004) <doi:10.3406/pica.2004.2396>.
+    mapclust: Bellanger Lise, Coulon Arthur, Husi Philippe (2021) <doi:10.1016/j.jas.2021.105431>.
+    seriograph: Desachy Bruno (2004) <doi:10.3406/pica.2004.2396>.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.3)
+Depends: R (>= 3.5.0)
 Imports: FactoMineR,
         grDevices,dplyr,tidyr,ggplot2,plotly,stringr,colorspace,crayon,
-        shiny,shinydashboard,shinyjs,shinyjqui,fpc,ggdendro,
+        shiny,shinydashboard,shinyjs,shinyjqui,fpc,ggdendro,htmltools,
         rstudioapi,htmlwidgets,shinythemes,markdown,explor,shinyWidgets,scatterD3,
         sp,ks,rgdal,foreign,maptools,grid,cluster,leaflet,ape,mapview
 Suggests: knitr, rmarkdown
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2021-02-19 14:47:45 UTC; Shadow
+Packaged: 2021-10-22 12:38:35 UTC; arcoulon
 Author: Lise Bellanger [aut],
   Philippe Husi [aut],
   Arthur Coulon [aut, cre],
   Bruno Desachy [ctb],
   Benjamin Martineau [ctb]
 Repository: CRAN
-Date/Publication: 2021-02-22 11:20:02 UTC
+Date/Publication: 2021-10-22 14:30:02 UTC
