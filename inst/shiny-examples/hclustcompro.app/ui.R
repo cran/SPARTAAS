@@ -16,7 +16,7 @@ library(cluster) #for silhouette
 library(stringr) #sub_extract
 library(shinythemes)
 
-ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("flatly"),
+ui <- fluidPage(useShinyjs(),withMathJax(),style="padding-top: 150px;",theme = shinytheme("flatly"),
     tags$style(HTML('#sort,#data,#subdivise,#tri,#sub1,#sub2,
          #import2,#import3,#import3,#Finishimport,#back1,#back2{color:white;background-color:#337ab7;border-color:#337ab7}
          #back{color:white;background-color:#f0ad4e}
@@ -33,6 +33,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
          }
     ')),
     tags$head(
+      tags$link(rel = "icon", type = "image/gif", href = "https://spartaas.gitpages.huma-num.fr/r-package/img/lambda.png"),
       tags$title("hclustcompro")
     ),
   #header panel
@@ -41,7 +42,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
     top = 0, left = 0, right = 0,
     fixed = TRUE,
     h2("hclustcompro: Hierarchical Agglomerative Clustering method by compromise"),
-    div(span(strong("SPARTAAS | hclustcompro")),span("v1.0 ",style ="font-size:14px;"))
+    div(span(strong("SPARTAAS | hclustcompro")))
   ),
   #footer
   absolutePanel(style="z-index: 2000;padding: 0px; border-bottom: 0px solid #CCC; background: #fff;opacity: 1;",
@@ -68,7 +69,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
                sidebarPanel(style="",
                             h1("R Package:"),
                             br(),
-                            HTML("<p>This method is part of the <a href='https://spartaas.frama.io/r-package/index.html'>SPARTAAS</a> package.</p>
+                            HTML("<p>This method is part of the <a target='_blank' href='https://spartaas.gitpages.huma-num.fr/r-package/index.html'>SPARTAAS</a> package.</p>
                                                         <p>If you are interested you can install our R package avaible on the <a href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
 
                                                         ")
@@ -126,9 +127,9 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
                                          tableOutput("data1f"),
                                          h4("Second data source (Stratigraphic connection or Time range data)"),
                                          hr(style="border-color: #222222;"),
-                                         h5("Stratigraphic connection"),
+                                         h5("Stratigraphic connection:"),
                                          tableOutput("data2f"),
-                                         h5("Timerange data)"),
+                                         h5("Timerange data:"),
                                          tableOutput("data3f")
                                 )
                       ),
@@ -161,10 +162,10 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
 
 
                             column(7,
-                                   actionButton("subdivise",span(icon("cut",lib="font-awesome"),"Subdivide"))
+                                   actionButton("subdivise",span(icon("scissors",lib="font-awesome"),"Subdivide"))
                             ),
                             column(5,
-                                   actionButton("reset",span(icon("undo",lib="font-awesome"),"Reset"))
+                                   actionButton("reset",span(icon("rotate-left",lib="font-awesome"),"Reset"))
                             ),div(style="height:40px;")
 
 
@@ -223,14 +224,15 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
 
 
                          br(),
-                         HTML("<p><img style=\"width:200px;\" src=\"GS/formule.png\"></p>"),
+                         uiOutput("formula"),
+                         #HTML("<p><img style=\"width:200px;\" src=\"GS/formule.png\"></p>"),
 
 
                          ####################################
                          #            NB GROUPE             #
                          ####################################
                          br(),br(),
-                         h3("Select the number og groupe in the partition"),
+                         h3("Select the number of groupe in the partition"),
                          hr(style="border-color: #222222;"),
                          column(width=6,
                                 column(10,
@@ -366,7 +368,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
                                          label_on = "Seriation",
                                          label_off = "Seriation",
                                          icon_on = icon("check"),
-                                         icon_off = icon("remove"),
+                                         icon_off = icon("trash"),
                                          value = TRUE
                                        ),
                                        selectInput("show", label = "Show", choices = list("both" = 1,
@@ -543,7 +545,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
 
 <h3 id=\"hclustcompro\">hclustcompro</h3>
 <p>The merging of the two data sources is done by a parameter (alpha) which allows to weight each source.</p>
-<p><img style=\"width:200px;\" src=\"GS/formule.png\"></p>
+<p>$$ \\boldsymbol{D}_\\alpha=\\alpha \\boldsymbol{D}_1+(1-\\alpha) \\boldsymbol{D}_2 $$</p>
 
 <p>The first one is a contingency table. Rows must be individuals (archaeological site, ...)
 and columns must be categories (type,...).
@@ -591,7 +593,8 @@ the lower limits and the minimum of the upper limits.</p>
 <h3 id=\"corcrit\">Correlation Criterion</h3>
 <p>A criterion for choosing alpha IN [0;1] must be determined by balancing the weights between the two
 information sources in the final classification. To obtain alpha, we define the following criterion:
-</p><p><img src=\"GS/formule2.png\"></p>
+</p><p>$$\\operatorname{CorCrit}_\\alpha=\\left|\\operatorname{Cor}\\left(\\mathbf{D}_\\alpha^{\\text {coph }}, \\mathbf{D}_1\\right)-\\operatorname{Cor}\\left(\\mathbf{D}_\\alpha^{\\text {coph }}, \\mathbf{D}_2\\right)\\right|
+$$</p>
 The CorCrit_alpha criterium in (1) represents the difference in absolute value between two cophenetic
 correlation (Cophenetic correlation is defined as the correlation between two distances matrices.
 It is calculated by considering the half distances matrices as vectors. It measures of how faithfully a
@@ -600,7 +603,9 @@ The first correlation is associated with the comparison between D1 and ultrametr
 with alpha fixed; while the second compares D2 and ultrametric distances from the HAC with alpha fixed.
 Then, in order to compromise between the information provided by D1 and D2, we decided to estimate alpha
 with hat(alpha) such that:
-</p><p><img src=\"GS/formule3.png\"></p>
+</p><p>$$
+\\hat{\\alpha}=\\min _\\alpha \\text { CorCrit }{ }_\\alpha
+$$</p>
 
 
 

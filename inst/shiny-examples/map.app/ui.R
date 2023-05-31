@@ -19,6 +19,7 @@ load(file = "./data/datacancer.RData")
 #----------------------------------------------------------------------------------------------#
 ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("flatly"),
                 tags$head(
+                  tags$link(rel = "icon", type = "image/gif", href = "https://spartaas.gitpages.huma-num.fr/r-package/img/lambda.png"),
                   tags$title("mapclust")
                 ),
                 tags$head(tags$style(
@@ -41,7 +42,7 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
                               top = 0, left = 0, right = 0,
                               fixed = TRUE,
                               titlePanel(h2("Divisive Hierarchical Clustering using Spatials Patches")),
-                              div(span(strong("SPARTAAS | MapClust ")),span("v1.0 ",style ="font-size:14px;"))
+                              div(span(strong("SPARTAAS | mapclust ")))
                 ),
                 #footer
                 absolutePanel(style="z-index: 2000;padding: 0px; border-bottom: 0px solid #CCC; background: #fff;opacity: 1;",
@@ -70,8 +71,8 @@ ui <- fluidPage(useShinyjs(),style="padding-top: 150px;",theme = shinytheme("fla
                                       sidebarPanel(style="border-width:0px;border-color:#222222;",
                                                    h1("R Package:"),
                                                    br(),
-                                                   HTML("<p>This method is part of the <a href='https://spartaas.frama.io/r-package/index.html'>SPARTAAS</a> package.</p>
-                                                        <p>If you are interested you can install our R package avaible on the <a href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
+                                                   HTML("<p>This method is part of the <a target='_blank' href='https://spartaas.gitpages.huma-num.fr/r-package/index.html'>SPARTAAS</a> package.</p>
+                                                        <p>If you are interested you can install our R package avaible on the <a target='_blank' href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a target='_blank' href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
 
                                                         ")
 
