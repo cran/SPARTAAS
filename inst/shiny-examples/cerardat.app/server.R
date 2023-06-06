@@ -84,6 +84,7 @@ server <- function(input, output, session) {
     modalDialog(title="Reference dataset:",size=c("l"),
                 div(style="height:15px;"),
                 h3("Reference dataset",style="text-align:center;"),hr(style="border-color: #222222;"),
+                p("reference data: count table plus a first column giving dates if known."),
                 h4("Upload file"),
                 # Input: Select a file ----
                 fileInput("fileD1", span(icon("import", lib = "glyphicon"),"Choose CSV File"),
@@ -142,6 +143,7 @@ server <- function(input, output, session) {
     modalDialog(title="Supplementary dataset:",size=c("l"),
                 div(style="height:15px;"),
                 h3("Supplementary dataset",style="text-align:center;"),hr(style="border-color: #222222;"),
+                p("Supplementary data: count table (same number of columns) plus a column for dates if known."),
                 h4("Upload file"),
                 # Input: Select a file ----
                 fileInput("fileD2", span(icon("import", lib = "glyphicon"),"Choose CSV File"),
@@ -199,10 +201,10 @@ server <- function(input, output, session) {
   values <- reactiveValues()
 
   #raw data
-  values[["date"]] = data$date
-  values[["col.sup"]] = data$col.sup
-  values[["df"]] = data$df
-  values[["col.ref"]] = NULL
+  values[["date"]] = datacerardat$date
+  values[["row.sup"]] = datacerardat$row.sup
+  values[["df"]] = datacerardat$df
+  values[["row.ref"]] = NULL
   values[["cerar_res"]] = NULL
   values[["D1"]] = NULL
   values[["D2"]] = NULL
@@ -236,9 +238,9 @@ server <- function(input, output, session) {
 
   observeEvent(input$Finishimport,{
     values[["date"]] = c(values[["D1"]][,1],values[["D2"]][,1])
-    values[["col.sup"]] = (length(values[["D1"]][,1])+1):(length(values[["D1"]][,1])+length(values[["D2"]][,1]))
-    values[["df"]] = as.data.frame(t(rbind(values[["D1"]][,-c(1)],values[["D2"]][,-c(1)])))
-    values[["col.ref"]] = NULL
+    values[["row.sup"]] = (length(values[["D1"]][,1])+1):(length(values[["D1"]][,1])+length(values[["D2"]][,1]))
+    values[["df"]] = rbind(values[["D1"]][,-c(1)],values[["D2"]][,-c(1)])
+    values[["row.ref"]] = NULL
     values[["cerar_res"]] = NULL
     shinyjs::disable(selector='a[data-value="Results"]')
     shinyjs::disable(selector='a[data-value="Visualization"]')
@@ -255,8 +257,9 @@ server <- function(input, output, session) {
     req(input$fileD1)
     inFile <- input$fileD1
 
-    if(is.null(inFile))
+    if(is.null(inFile)){
       return(NULL)
+    }
 
     tryCatch({
       if(input$rownamesD1){
@@ -330,20 +333,20 @@ server <- function(input, output, session) {
   output$eigenvalue <- renderPlotly({
     date = values[["date"]]
     df = values[["df"]]
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
     #nettoyage des GT ie GT<5
-    GT_rm_ref = which(rowSums(df[,col.ref])<5)
+    GT_rm_ref = which(colSums(df[row.ref,])<5)
     #?????????????????
-    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
+    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),row.sup])<5)
 
     #data reference
-    if(sum(GT_rm_ref)==0)
-      data_ref = df[,col.ref]
-    else
-      data_ref = df[-c(GT_rm_ref),col.ref]
-
+    if(sum(GT_rm_ref)==0){
+      data_ref = df[row.ref,]
+    }else{
+      data_ref = df[row.ref,-c(GT_rm_ref)]
+    }
 
     DOF = min(ncol(data_ref)-1,nrow(data_ref)-1)
     ca.NMI.init <- ade4::dudi.coa(data_ref,scannf=FALSE,nf=DOF)
@@ -363,21 +366,22 @@ server <- function(input, output, session) {
   output$RMSE <- renderPlot({
     df = values[["df"]]
     date = values[["date"]]
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
-    #vector for ref data (every not in col.sup)
+    #vector for ref data (every not in row.sup)
 
     #nettoyage des GT ie GT<5
-    GT_rm_ref = which(rowSums(df[,col.ref])<5)
+    GT_rm_ref = which(colSums(df[row.ref,])<5)
     #?????????????????
-    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
+    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),row.sup])<5)
 
     #data reference
-    if(sum(GT_rm_ref)==0)
-      data_ref = df[,col.ref]
-    else
-      data_ref = df[-c(GT_rm_ref),col.ref]
+    if(sum(GT_rm_ref)==0){
+      data_ref = df[row.ref,]
+    }else{
+      data_ref = df[row.ref,-c(GT_rm_ref)]
+    }
 
     #DOF Degrees of freedom
     DOF = min(ncol(data_ref)-1,nrow(data_ref)-1)
@@ -385,8 +389,8 @@ server <- function(input, output, session) {
     #Correspondance analysis
     ca.NMI <- ade4::dudi.coa(data_ref,scannf=FALSE,nf=DOF)
 
-    #df with coord ens (col) de reference + date monnaie
-    DATA_REF = cbind(ca.NMI$co, date=date[col.ref])
+    #df with coord ens (li) de reference + date monnaie
+    DATA_REF = cbind(ca.NMI$li, date=date[row.ref])
     max = min(length(DATA_REF[!is.na(DATA_REF$date),1])-2,DOF)
 
 
@@ -398,20 +402,22 @@ server <- function(input, output, session) {
     R_sq <- c()
 
     for(i in 1:max){
-      if(i == 1)
-        formula <- paste0(formula,' Comp',i)
-      else
-        formula <- paste0(formula,' + Comp',i)
+      if(i == 1){
+        formula <- paste0(formula,' Axis',i)
+      }else{
+        formula <- paste0(formula,' + Axis',i)
+      }
 
       lm = lm(as.formula(formula),data = DATA_REF)
       MSE <- c(MSE,mean(lm$residuals^2))
       PRESS <- c(PRESS,press(lm))
 
     }
+    PRESS_max=max(PRESS[is.finite(PRESS)])
 
     if(input$quid == "both"){
       plot(x=1:max,y=PRESS,log="y",yaxt='n',type="o",pch=1,ylab="PRediction Error Sum Of Squares (PRESS)",
-           xlab="Number of component in lm()",ylim = c(min(MSE),max(PRESS)))
+           xlab="Number of component in lm()",ylim = c(min(MSE),PRESS_max))
       points(x = which(PRESS == min(PRESS)), y=min(PRESS),pch=16,cex=1.1)
       axis(2, at=log10Tck('y','major'), tck= 0.02, labels=format(log10Tck('y','major'), scientific = T))
       axis(2, at=log10Tck('y','minor'), tck= 0.01, labels=NA)
@@ -442,21 +448,22 @@ server <- function(input, output, session) {
   output$R_sq <- renderPlot({
     df = values[["df"]]
     date = values[["date"]]
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
-    #vector for ref data (every not in col.sup)
+    #vector for ref data (every not in row.sup)
 
     #nettoyage des GT ie GT<5
-    GT_rm_ref = which(rowSums(df[,col.ref])<5)
+    GT_rm_ref = which(colSums(df[row.ref,])<5)
     #?????????????????
-    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
+    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),row.sup])<5)
 
     #data reference
-    if(sum(GT_rm_ref)==0)
-      data_ref = df[,col.ref]
-    else
-      data_ref = df[-c(GT_rm_ref),col.ref]
+    if(sum(GT_rm_ref)==0){
+      data_ref = df[row.ref,]
+    }else{
+      data_ref = df[row.ref,-c(GT_rm_ref)]
+    }
 
     #DOF Degrees of freedom
     DOF = min(ncol(data_ref)-1,nrow(data_ref)-1)
@@ -465,7 +472,7 @@ server <- function(input, output, session) {
     ca.NMI <- ade4::dudi.coa(data_ref,scannf=FALSE,nf=DOF)
 
     #df with coord ens (col) de reference + date monnaie
-    DATA_REF = cbind(ca.NMI$co, date=date[col.ref])
+    DATA_REF = cbind(ca.NMI$li, date=date[row.ref])
     max = min(length(DATA_REF[!is.na(DATA_REF$date),1])-2,DOF)
 
 
@@ -479,9 +486,9 @@ server <- function(input, output, session) {
 
     for(i in 1:max){
       if(i == 1)
-        formula <- paste0(formula,' Comp',i)
+        formula <- paste0(formula,' Axis',i)
       else
-        formula <- paste0(formula,' + Comp',i)
+        formula <- paste0(formula,' + Axis',i)
 
       #model <- caret::train(as.formula(formula), data = DATA_REF, method = "lm", trControl = ctrl, na.action=na.omit)
       #RMSE <- c(RMSE,model$results$RMSE)
@@ -504,13 +511,13 @@ server <- function(input, output, session) {
 
 
   #output$checkbox <- renderText({
-  #  col.ref = which(!(1:length(values[["df"]][1,]) %in% values[["col.sup"]]))
+  #  row.ref = which(!(1:length(values[["df"]][1,]) %in% values[["row.sup"]]))
   #  date = values[["date"]]
   #
-  #  updateCheckboxGroupInput(session, "col.refbox",
+  #  updateCheckboxGroupInput(session, "row.refbox",
   #                           choiceNames = as.list(colnames(values[["df"]])),
   #                           choiceValues = as.list(1:ncol(values[["df"]])),
-  #                           selected = col.ref
+  #                           selected = row.ref
   #  )
   #  ""
   #})
@@ -518,34 +525,37 @@ server <- function(input, output, session) {
   output$cerar <- renderText({
     date = values[["date"]]
     df = values[["df"]]
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
-    if(sum(colSums(df)<5)!=0){
-      warning(paste0("The sums of columns ",capture.output(cat(names(df)[which(colSums(df)<5)]))," are less than 5. They were suppressed from the analysis."))
-      #retire index de la col dans col.sup
-      tmp.col.status = data.frame(
-        index = c(col.ref,col.sup),
-        status = c(rep("ref",length(col.ref)),rep("sup",length(col.sup)))
+    #todo: while convergence
+
+    #check rowsum ens
+    if(sum(rowSums(df)<5)!=0){
+      warning(paste0("The sums of rows ",capture.output(cat(row.names(df)[which(rowSums(df)<5)]))," are less than 5. They were suppressed from the analysis."))
+      #retire index de la col dans row.sup
+      tmp.row.status = data.frame(
+        index = c(row.ref,row.sup),
+        status = c(rep("ref",length(row.ref)),rep("sup",length(row.sup)))
       )
 
-      tmp.col.status = tmp.col.status[order(tmp.col.status$index),]
-      #new col.sup
-      tmp.col.status = tmp.col.status[!colSums(df)<5,]
+      tmp.row.status = tmp.row.status[order(tmp.row.status$index),]
+      #new row.sup
+      tmp.row.status = tmp.row.status[!rowSums(df)<5,]
       #retire la col de date
-      date = date[!colSums(df)<5]
+      date = date[!rowSums(df)<5]
       #retire la col de df
-      df = df[,!colSums(df)<5]
+      df = df[!rowSums(df)<5,]
 
-      col.ref = which(tmp.col.status$status == "ref")
-      col.sup = which(tmp.col.status$status == "sup")
+      row.ref = which(tmp.row.status$status == "ref")
+      row.sup = which(tmp.row.status$status == "sup")
 
       values[["df"]] = df
       values[["date"]] = date
-      values[["col.sup"]] = col.sup
+      values[["row.sup"]] = row.sup
     }
 
-    values[["cerar_res"]] = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+    values[["cerar_res"]] = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     ""
   })
 
@@ -585,7 +595,7 @@ server <- function(input, output, session) {
 
   output$lmplot <- renderUI({
     if(is.null(values[["cerar_res"]])){
-      cerar_res = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+      cerar_res = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     }else{
       cerar_res = values[["cerar_res"]]
     }
@@ -605,17 +615,17 @@ server <- function(input, output, session) {
     date = values[["date"]]
     df = values[["df"]]
 
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
     if(is.null(values[["cerar_res"]])){
-      cerar_res = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+      cerar_res = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     }else{
       cerar_res = values[["cerar_res"]]
     }
 
 
-    tmp = cerar_res$prediction[col.ref,]
+    tmp = cerar_res$prediction[row.ref,]
     tmp = tmp[!is.na(tmp$date),]
 
 
@@ -630,7 +640,7 @@ server <- function(input, output, session) {
     #generation du graph
     graph = suppressWarnings(ggplot(df) +
       geom_point(aes(x = names, y = date, text=paste("lower:",lwr,"<br>upper:",upr)),colour="red",shape=3, size=2) +
-      geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, size=1)+
+      geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, linewidth=1)+
       ylab("Date (year)") + xlab("Site") + ggtitle("") +
       theme_classic() +
       scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
@@ -650,16 +660,16 @@ server <- function(input, output, session) {
   output$evaldatesup <- renderPlotly({
     date = values[["date"]]
     df = values[["df"]]
-    col.sup = values[["col.sup"]]
+    row.sup = values[["row.sup"]]
 
     if(is.null(values[["cerar_res"]])){
-      cerar_res = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+      cerar_res = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     }else{
       cerar_res = values[["cerar_res"]]
     }
 
 
-    tmp = cerar_res$prediction[col.sup,]
+    tmp = cerar_res$prediction[row.sup,]
     tmp = tmp[!is.na(tmp$date),]
 
     if(dim(tmp)[1] == 0){
@@ -679,7 +689,7 @@ server <- function(input, output, session) {
       #generation du graph
       graph = suppressWarnings(ggplot(df) +
                                  geom_point(aes(x = names, y = date, text=paste("lower:",lwr,"<br>upper:",upr)),colour="red",shape=3, size=2) +
-                                 geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, size=1)+
+                                 geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, linewidth=1)+
                                  ylab("Date (year)") + xlab("Site") + ggtitle("") +
                                  theme_classic() +
                                  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
@@ -710,29 +720,30 @@ server <- function(input, output, session) {
   observeEvent(input$confidence,{
     df = values[["df"]]
     date = values[["date"]]
-    col.sup = values[["col.sup"]]
+    row.sup = values[["row.sup"]]
 
-    values[["cerar_res"]] = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+    values[["cerar_res"]] = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
   })
 
 
 
   output$CA <- renderScatterD3({
     df = values[["df"]]
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
     #nettoyage des GT ie GT<5
-    GT_rm_ref = which(rowSums(df[,col.ref])<5)
+    GT_rm_ref = which(colSums(df[row.ref,])<5)
 
     #?????????????????
-    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
+    #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),row.sup])<5)
 
     #data reference
-    if(sum(GT_rm_ref)==0)
-      data_ref = df[,col.ref]
-    else
-      data_ref = df[-c(GT_rm_ref),col.ref]
+    if(sum(GT_rm_ref)==0){
+      data_ref = df[row.ref,]
+    }else{
+      data_ref = df[row.ref,-c(GT_rm_ref)]
+    }
     DOF = min(ncol(data_ref)-1,nrow(data_ref)-1)
 
     updateNumericInput(session, "axe1", max = DOF)
@@ -796,18 +807,18 @@ server <- function(input, output, session) {
   output$cerardat_plot_ref <- renderUI({
     df = values[["df"]]
 
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
 
-    progress <- Progress$new(session, min=1, max=length(col.ref))
+    progress <- Progress$new(session, min=1, max=length(row.ref))
     on.exit(progress$close())
 
     progress$set(message = 'Calculation in progress',
                  detail = 'This may take a while...')
 
     if(is.null(values[["cerar_res"]])){
-      cerar_res = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+      cerar_res = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     }else{
       cerar_res = values[["cerar_res"]]
     }
@@ -823,7 +834,7 @@ server <- function(input, output, session) {
     tmp_ = c()
     for(i in 1:ncol(cerar_res$cont_gt) )
     {
-      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = cerar_res$cont_gt[,i], sigma= GT_date_sd[,2])
+      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = unlist(as.vector(cerar_res$cont_gt[i,])), sigma= GT_date_sd[,2])
       date_accumulation_density = nor1mix::dnorMixL(date_accumulation, xlim=xlim)
 
       tmp_ = c(tmp_,max(date_accumulation_density$y))
@@ -831,7 +842,7 @@ server <- function(input, output, session) {
     }
     ylim=c(0,max(tmp_))
 
-    plot_output_list <- lapply(col.ref, function(i) {
+    plot_output_list <- lapply(row.ref, function(i) {
       name <- paste("cera_plot", i, sep="")
       output[[name]] <- renderPlot({
         plot(cerar_res,which=i,xlim=xlim,ylim=ylim)
@@ -844,17 +855,17 @@ server <- function(input, output, session) {
   output$cerardat_plot_sup <- renderUI({
     df = values[["df"]]
 
-    col.sup = values[["col.sup"]]
-    col.ref = which(!(1:length(df[1,]) %in% col.sup))
+    row.sup = values[["row.sup"]]
+    row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
-    progress <- Progress$new(session, min=1, max=length(col.sup))
+    progress <- Progress$new(session, min=1, max=length(row.sup))
     on.exit(progress$close())
 
     progress$set(message = 'Calculation in progress',
                  detail = 'This may take a while...')
 
     if(is.null(values[["cerar_res"]])){
-      cerar_res = cerardat(df, col.sup, date, nf = input$k, graph=F, confidence = input$confidence)
+      cerar_res = cerardat(df, row.sup, date, nf = input$k, graph=F, confidence = input$confidence)
     }else{
       cerar_res = values[["cerar_res"]]
     }
@@ -870,7 +881,7 @@ server <- function(input, output, session) {
     tmp_ = c()
     for(i in 1:ncol(cerar_res$cont_gt) )
     {
-      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = cerar_res$cont_gt[,i], sigma= GT_date_sd[,2])
+      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = unlist(as.vector(cerar_res$cont_gt[i,])), sigma= GT_date_sd[,2])
       date_accumulation_density = nor1mix::dnorMixL(date_accumulation, xlim=xlim)
 
       tmp_ = c(tmp_,max(date_accumulation_density$y))
@@ -878,7 +889,7 @@ server <- function(input, output, session) {
     }
     ylim=c(0,max(tmp_))
 
-    plot_output_list <- lapply(col.sup, function(i) {
+    plot_output_list <- lapply(row.sup, function(i) {
       name <- paste("cera_plot", i, sep="")
       output[[name]] <- renderPlot({
         plot(cerar_res,which=i,xlim=xlim,ylim=ylim)
@@ -920,6 +931,22 @@ server <- function(input, output, session) {
 
   output$formula_dateEv <- renderUI({
     withMathJax(paste0("Linear model: $$ \\text { dateEv }_i=\\beta_0 + \\sum_{k=1}^K \\beta_k\\left(F^k\\right)_i+\\varepsilon_i \\quad \\forall i=1, \\ldots, I $$ for K the number of component kept in the model and I the number of observations with a date."))
+  })
+
+  observeEvent(input$data,{
+    shinyjs::disable("import2")
+  })
+
+  observeEvent(input$import2,{
+    shinyjs::disable("Finishimport")
+  })
+
+  observeEvent(input$fileD1,{
+    shinyjs::enable("import2")
+  })
+
+  observeEvent(input$fileD2,{
+    shinyjs::enable("Finishimport")
   })
 
 

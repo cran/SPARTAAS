@@ -6,18 +6,18 @@ press <- function(linear.model) {
   return(PRESS)
 }
 
-cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
+cerardat = function(df, row.sup, date, nf = NULL, confidence = 0.95, graph = T){
 
   ## test
   #
   # df is data.frame
   if(!is.data.frame(df)){stop("df is not a data frame.")}
   #
-  # col.sup is vector
-  if(!is.vector(col.sup)){stop("col.sup is not a vector.")}
+  # row.sup is vector
+  if(!is.vector(row.sup)){stop("row.sup is not a vector.")}
   #
-  # col.sup is interger
-  #if(!is.integer(col.sup)){stop("col.sup is not integer.")}
+  # row.sup is interger
+  #if(!is.integer(row.sup)){stop("row.sup is not integer.")}
   #
   # date is vector
   if(!is.vector(date)){stop("date is not a vector.")}
@@ -28,14 +28,13 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   # nf is integerdate
   #if(!is.integer(nf)){stop("nf is not integer.")}
   #
-  # max(col.sup) < 280 size df
-  if(max(col.sup) > dim(df)[2]){stop("col.sup must contain integers between 0 and the number of lines in df.")}
-  # min(col.sup) > 0
-
-  if(min(col.sup) < 0){stop("col.sup must contain integers between 0 and the number of lines in df.")}
+  # max(row.sup) < 280 size df
+  if(max(row.sup) > dim(df)[1]){stop("row.sup must contain integers between 1 and the number of lines in df.")}
+  # min(row.sup) > 0
+  if(min(row.sup) <= 0){stop("row.sup must contain integers between 1 and the number of lines in df.")}
   #
-  # length(date) = ncol(df)
-  if(!length(date) == ncol(df)){stop("date must have the same number of observations as the number of lines in df. Complete with NA if necessary.")}
+  # length(date) = nrow(df)
+  if(!length(date) == nrow(df)){stop("date must have the same number of observations as the number of lines in df. Complete with NA if necessary.")}
   #
   # nf > 0
   if(!is.null(nf)){
@@ -55,53 +54,55 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   lwr = 0
   upr = 0
 
-  #vector for ref data (every not in col.sup)
-  col.ref = which(!(1:length(df[1,]) %in% col.sup))
+  #vector for ref data (every not in row.sup)
+  row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
-  #rm col(ens) < 5
-  #si col < 5
-  if(sum(colSums(df)<5)!=0){
-    warning(paste0("The sums of columns ",capture.output(cat(names(df)[which(colSums(df)<5)]))," are less than 5. They were suppressed from the analysis."))
-    #retire index de la col dans col.sup
-    tmp.col.status = data.frame(
-      index = c(col.ref,col.sup),
-      status = c(rep("ref",length(col.ref)),rep("sup",length(col.sup)))
+  #todo: while convergence
+
+  #rm row(ens) < 5
+  #si row < 5
+  if(sum(rowSums(df)<5)!=0){
+    warning(paste0("The sums of rows ",capture.output(cat(row.names(df)[which(rowSums(df)<5)]))," are less than 5. They were suppressed from the analysis."))
+    #retire index de la row dans row.sup
+    tmp.row.status = data.frame(
+      index = c(row.ref,row.sup),
+      status = c(rep("ref",length(row.ref)),rep("sup",length(row.sup)))
     )
 
-    tmp.col.status = tmp.col.status[order(tmp.col.status$index),]
-    #new col.sup
-    tmp.col.status = tmp.col.status[!colSums(df)<5,]
+    tmp.row.status = tmp.row.status[order(tmp.row.status$index),]
+    #new row.sup
+    tmp.row.status = tmp.row.status[!colSums(df)<5,]
     #retire la col de date
-    date = date[!colSums(df)<5]
+    date = date[!rowSums(df)<5]
     #retire la col de df
-    df = df[,!colSums(df)<5]
+    df = df[,!rowSums(df)<5]
 
-    col.ref = which(tmp.col.status$status == "ref")
-    col.sup = which(tmp.col.status$status == "sup")
+    row.ref = which(tmp.row.status$status == "ref")
+    row.sup = which(tmp.row.status$status == "sup")
   }
 
 
 
   #nettoyage des GT ie GT<5
-  GT_rm_ref = which(rowSums(df[,col.ref])<5)
+  GT_rm_ref = which(colSums(df[row.ref,])<5)
 
-  if(sum(rowSums(df[,col.ref])<5)!=0){
-    warning(paste0("The sums of rows (GT) ",capture.output(cat(row.names(df)[which(rowSums(df[,col.ref])<5)]))," are less than 5. They were suppressed from the analysis."))
+  if(sum(colSums(df[row.ref,])<5)!=0){
+    warning(paste0("The sums of columns (GT) ",capture.output(cat(names(df)[which(colSums(df[row.ref,])<5)]))," are less than 5. They were suppressed from the analysis."))
   }
   #?????????????????
-  #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
+  #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),row.sup])<5)
 
   #data reference
   if(sum(GT_rm_ref)==0){
-    data_ref = df[,col.ref]
+    data_ref = df[row.ref,]
   }else{
-    data_ref = df[-c(GT_rm_ref),col.ref]
+    data_ref = df[row.ref,-c(GT_rm_ref)]
   }
 
   if(sum(GT_rm_ref)==0){
-    data_sup = df[,col.sup]
+    data_sup = df[row.sup,]
   }else{
-    data_sup = df[-c(GT_rm_ref),col.sup]
+    data_sup = df[row.sup,-c(GT_rm_ref)]
   }
 
 
@@ -118,7 +119,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
 
     #nb axe inertie > 60%
     #k=min(which(ade4::inertia.dudi(ca.NMI.init, row.inertia=F, col.inertia=T)$tot.inertia[,3]>60))
-    k=cerardat_estim_nf(df, col.sup, date)$nf[1]
+    k=cerardat_estim_nf(df, row.sup, date)$nf[1]
   }else{
     k=nf
   }
@@ -130,20 +131,21 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   res.CA = FactoMineR::CA(data_ref, ncp = k, graph = graph)
 
   #passer par FactoMineR::CA()
-  obs_ca_eval = res.CA$col$cos2
+  obs_ca_eval = res.CA$row$cos2
   #obs_ca_eval = t(rowSums(res.CA$col$cos2))
 
   #df with coord ens (col) de reference + date monnaie
-  DATA_REF = cbind(ca.NMI$co, date=date[col.ref])
+  DATA_REF = cbind(ca.NMI$li, date=date[row.ref])
+  #here
 
   #genrate col coord for sup data
-  data_sup_proj_col = ade4::supcol(ca.NMI,data_sup)$cosup
+  data_sup_proj_col = ade4::suprow(ca.NMI,data_sup)$lisup
   #df with coord GT (col) supplementaire + date monnaie
-  DATA_SUP = cbind(data_sup_proj_col, date=date[col.sup])
+  DATA_SUP = cbind(data_sup_proj_col, date=date[row.sup])
 
   #final data
   DATA_TOT = rbind(DATA_REF, DATA_SUP)
-  DATA_TOT = DATA_TOT[c(col.ref,col.sup),]
+  DATA_TOT = DATA_TOT[c(row.ref,row.sup),]
 
   #linear regression
   #DATA_REF_lm = MASS::steapAIC(lm(date~.,data=DATA_REF, na.action=na.omit),trace=0)
@@ -189,37 +191,38 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   predict_obj_row = predict(DATA_REF_lm, newdata=DATA_TOT, se.fit=TRUE, interval="confidence", level=confidence)
 
   #prediction date GT
-  dimnames(ca.NMI$li)[[2]] = dimnames(ca.NMI$co)[[2]]
-  predict_obj_col = predict(DATA_REF_lm, newdata=ca.NMI$li, se.fit=TRUE, interval="confidence", level=confidence)
+  dimnames(ca.NMI$co)[[2]] = dimnames(ca.NMI$li)[[2]]
+  predict_obj_col = predict(DATA_REF_lm, newdata=ca.NMI$co, se.fit=TRUE, interval="confidence", level=confidence)
 
   ##### 95% des dates des GT
   date_gt = arrondi(predict_obj_col$fit,0)
   dimnames(date_gt)[[2]]<-c("Fit_dateEv","lower","upper")
 
   #matrix proportion GT
-  if(sum(GT_rm_ref)==0)
+  if(sum(GT_rm_ref)==0){
     cont = df
-  else
-    cont = df[-c(GT_rm_ref),]
+  }else{
+    cont = df[,-c(GT_rm_ref)]
+  }
 
   cont.gt = cont
 
-  for(j in 1:ncol(cont))
+  for(j in 1:nrow(cont))
   {
-    cont.gt[,j]<-cont[,j]/as.matrix(colSums(cont))[j]
+    cont.gt[j,]<-cont[j,]/as.matrix(rowSums(cont))[j]
   }
 
   median.norMix <- function(x) nor1mix::qnorMix(1/2,x)
 
-  median_tab = as.data.frame(matrix(0, ncol(cont),3))
-  dimnames(median_tab)[[1]] = dimnames(cont)[[2]]
+  median_tab = as.data.frame(matrix(0, nrow(cont),3))
+  dimnames(median_tab)[[1]] = dimnames(cont)[[1]]
   dimnames(median_tab)[[2]] = c("Median_dateAc","lower","upper")
 
   date_gt_sd = arrondi(cbind(as.data.frame(predict_obj_col$fit)[,1], as.data.frame(predict_obj_col$se.fit)),1)
 
-  for(i in 1:ncol(cont))
+  for(i in 1:nrow(cont))
   {
-    ex = nor1mix::norMix(mu = date_gt_sd[,1],w=cont.gt[,i],sigma= date_gt_sd[,2])
+    ex = nor1mix::norMix(mu = date_gt_sd[,1],w=unlist(as.vector(cont.gt[i,])),sigma= date_gt_sd[,2])
     median_tab[i,] = cbind(median.norMix(ex), nor1mix::qnorMix(0.025,ex), nor1mix::qnorMix(0.975,ex))
   }
 
@@ -231,7 +234,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   dimnames(date_predict)[[1]]<-dimnames(predict_obj_row$fit)[[1]]
   dimnames(date_predict)[[2]]<-c("date","Fit_dateEv","lower_Ev","upper_Ev","Median_dateAc","lower_Ac","upper_Ac")
 
-  tmp = date_predict[col.ref,]
+  tmp = date_predict[row.ref,]
   tmp = tmp[!is.na(tmp$date),]
 
   df = data.frame(
@@ -245,7 +248,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   #generation du graph
   check_ref = ggplot(df) +
     geom_point(aes(x = names, y = date),colour="red",shape=3, size=3) +
-    geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, size=1)+
+    geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, linewidth =1)+
     ylab("Date (year)") + xlab("Site") + ggtitle("Comparison of estimated dates (black) with actual dates (red)") +
     theme_classic() +
     scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
@@ -259,7 +262,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)
     )
 
-  tmp2 = date_predict[col.sup,]
+  tmp2 = date_predict[row.sup,]
   tmp2 = tmp2[!is.na(tmp2$date),]
 
 
@@ -275,7 +278,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
   #generation du graph
   check_sup = ggplot(df2) +
     geom_point(aes(x = names, y = date),colour="red",shape=3, size=3) +
-    geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, size=1)+
+    geom_errorbar( aes(x=names, ymin=lwr, ymax=upr), width=.15, colour="#3f0b18", alpha=0.9, linewidth=1)+
     theme_classic() +
     scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
     theme(
@@ -307,7 +310,7 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
         Shapiro_Wilks       = Shapiro,
         Durbin_Watson       = DW,
         Breusch_Pagan       = BP,
-        col.sup             = col.sup,
+        row.sup             = row.sup,
         call                = match.call()
       ),
       class = c("cerardat_obj","list")
@@ -316,16 +319,16 @@ cerardat = function(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T){
 
 }
 
-cerardat_estim_nf <- function(df, col.sup, date){
+cerardat_estim_nf <- function(df, row.sup, date){
 
   # df is data.frame
   if(!is.data.frame(df)){stop("df is not a data frame.")}
   #
-  # col.sup is vector
-  if(!is.vector(col.sup)){stop("col.sup is not a vector.")}
+  # row.sup is vector
+  if(!is.vector(row.sup)){stop("row.sup is not a vector.")}
   #
-  # col.sup is interger
-  #if(!is.integer(col.sup)){stop("col.sup is not integer.")}
+  # row.sup is interger
+  #if(!is.integer(row.sup)){stop("row.sup is not integer.")}
   #
   # date is vector
   if(!is.vector(date)){stop("date is not a vector.")}
@@ -336,28 +339,27 @@ cerardat_estim_nf <- function(df, col.sup, date){
   # nf is integerdate
   #if(!is.integer(nf)){stop("nf is not integer.")}
   #
-  # max(col.sup) < 280 size df
-  if(max(col.sup) > dim(df)[2]){stop("col.sup must contain integers between 0 and the number of lines in df.")}
-  # min(col.sup) > 0
-
-  if(min(col.sup) < 0){stop("col.sup must contain integers between 0 and the number of lines in df.")}
+  # max(row.sup) < 280 size df
+  if(max(row.sup) > dim(df)[1]){stop("row.sup must contain integers between 1 and the number of lines in df.")}
+  # min(row.sup) > 0
+  if(min(row.sup) <= 0){stop("row.sup must contain integers between 1 and the number of lines in df.")}
   #
-  # length(date) = ncol(df)
-  if(!length(date) == ncol(df)){stop("date must have the same number of observations as the number of lines in df. Complete with NA if necessary.")}
+  # length(date) = 280
+  if(!length(date) == nrow(df)){stop("date must have the same number of observations as the number of lines in df. Complete with NA if necessary.")}
   #
 
   nf = 0
 
   #vector for ref data (every not in col.sup)
-  col.ref = which(!(1:length(df[1,]) %in% col.sup))
+  row.ref = which(!(1:length(df[,1]) %in% row.sup))
 
   #nettoyage des GT ie GT<5
-  GT_rm_ref = which(rowSums(df[,col.ref])<5)
+  GT_rm_ref = which(colSums(df[row.ref,])<5)
   #?????????????????
   #GT_rm_sup = which(colSums(df[-c(GT_rm_ref),col.sup])<5)
 
   #data reference
-  data_ref = df[-c(GT_rm_ref),col.ref]
+  data_ref = df[row.ref,-c(GT_rm_ref)]
 
   #DOF Degrees of freedom
   DOF = min(ncol(data_ref)-1,nrow(data_ref)-1)
@@ -367,7 +369,7 @@ cerardat_estim_nf <- function(df, col.sup, date){
 
 
   #df with coord ens (col) de reference + date monnaie
-  DATA_REF = cbind(ca.NMI$co, date=date[col.ref])
+  DATA_REF = cbind(ca.NMI$li, date=date[row.ref])
 
   max = min(length(DATA_REF[!is.na(DATA_REF$date),1])-2,DOF)
 
@@ -380,11 +382,11 @@ cerardat_estim_nf <- function(df, col.sup, date){
   R_sq <- c()
 
   for(i in 1:max){
-    if(i == 1)
-      formula <- paste0(formula,' Comp',i)
-    else
-      formula <- paste0(formula,' + Comp',i)
-
+    if(i == 1){
+      formula <- paste0(formula,' Axis',i)
+    }else{
+      formula <- paste0(formula,' + Axis',i)
+    }
     #model <- caret::train(as.formula(formula), data = DATA_REF, method = "lm", trControl = ctrl, na.action=na.omit)
     #RMSE <- c(RMSE,model$results$RMSE)
     #R_sq <- c(R_sq,model$results$Rsquared)
@@ -493,11 +495,14 @@ plot.cerardat_obj = function(x,
 
   AUTO_TICK = trunc((xlim[2]-xlim[1])/100)
 
-  if(is.null(which))
-    which = 1:ncol(x$cont_gt)
+  if(is.null(which)){
+    which = 1:nrow(x$cont_gt)
+  }
 
-  if(length(which) > 1)
+
+  if(length(which) > 1){
     pb <- utils::txtProgressBar(min = 0, max = length(which), style = 3)
+  }
 
   ens_date_sd = arrondi(cbind(
     Pred=data.frame(x$predict_obj_row$fit)[,1],
@@ -513,7 +518,7 @@ plot.cerardat_obj = function(x,
     tmp_ = c()
     for(i in 1:ncol(x$cont_gt) )
     {
-      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = x$cont_gt[,i], sigma= GT_date_sd[,2])
+      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = unlist(as.vector(x$cont_gt[i,])), sigma= GT_date_sd[,2])
       date_accumulation_density = nor1mix::dnorMixL(date_accumulation, xlim=xlim)
 
       tmp_ = c(tmp_,max(date_accumulation_density$y))
@@ -521,11 +526,11 @@ plot.cerardat_obj = function(x,
     ylim=c(0,max(tmp_))
   }
 
-  col.ref = which(!(1:length(ens_date_sd$Pred) %in% x$col.sup))
+  row.ref = which(!(1:length(ens_date_sd$Pred) %in% x$row.sup))
 
   for(i in which)
   {
-    date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = x$cont_gt[,i], sigma= GT_date_sd[,2])
+    date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = unlist(as.vector(x$cont_gt[i,])), sigma= GT_date_sd[,2])
     date_accumulation_density = nor1mix::dnorMixL(date_accumulation, xlim=xlim)
 
     date_evenement = nor1mix::norMix(ens_date_sd[i,1],sigma=ens_date_sd[i,2])
@@ -544,15 +549,15 @@ plot.cerardat_obj = function(x,
     sub=""
 
 
-    if(i %in% x$col.sup){
+    if(i %in% x$row.sup){
       sub=""
     }else{
-      sub=paste("Quality of row representation (cos2) in correspondence analysis:",arrondi(sum(x$obs_ca_eval[which(col.ref == i),1:x$k]),2))
+      sub=paste("Quality of row representation (cos2) in correspondence analysis:",arrondi(sum(x$obs_ca_eval[which(row.ref == i),1:x$k]),2))
     }
 
 
     plot(date_accumulation_density,xlim=xlim, ylim=ylim,xlab="Date",col="black",
-         ylab=dimnames(x$cont_gt)[[2]][i],type= "l",xaxt="n",
+         ylab=dimnames(x$cont_gt)[[1]][i],type= "l",xaxt="n",
          main="model dateEv (red) and dateAc (black)",
          sub=sub,...)
 
@@ -609,7 +614,7 @@ extract_results = function(cerardat,
     tmp_ = c()
     for(i in 1:ncol(cerardat$cont_gt) )
     {
-      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = cerardat$cont_gt[,i], sigma= GT_date_sd[,2])
+      date_accumulation <- nor1mix::norMix(mu = GT_date_sd[,1], w = unlist(as.vector(cerardat$cont_gt[i,])), sigma= GT_date_sd[,2])
       date_accumulation_density = nor1mix::dnorMixL(date_accumulation, xlim=xlim)
 
       tmp_ = c(tmp_,max(date_accumulation_density$y))
@@ -619,7 +624,7 @@ extract_results = function(cerardat,
 
   for(i in 1:ncol(cerardat$cont_gt) )
   {
-    date_accumulation = nor1mix::norMix(mu=GT_date_sd[,1],w=cerardat$cont_gt[,i],sigma=GT_date_sd[,2])
+    date_accumulation = nor1mix::norMix(mu=GT_date_sd[,1],w=unlist(as.vector(cerardat$cont_gt[i,])),sigma=GT_date_sd[,2])
     date_accumulation_density = nor1mix::dnorMixL(date_accumulation,xlim=xlim)
 
     date_evenement = nor1mix::norMix(ens_date_sd[i,1],sigma=ens_date_sd[i,2])
@@ -636,12 +641,12 @@ extract_results = function(cerardat,
     date_evenement_density$y[length(date_accumulation_density$y)] = 0
 
     grDevices::tiff(file=path.expand(paste(path,"/",
-                    dimnames(cerardat$cont_gt)[[2]][i],".jpeg",sep="")),
+                    dimnames(cerardat$cont_gt)[[1]][i],".jpeg",sep="")),
                     width = width, height = height,units = "px", pointsize = 12)
 
 
     plot(date_accumulation_density,xlim=xlim, ylim=ylim,xlab="Date",col="black",
-           ylab=dimnames(cerardat$cont_gt)[[2]][i],type= "l",xaxt="n",
+           ylab=dimnames(cerardat$cont_gt)[[1]][i],type= "l",xaxt="n",
            main="model dateEv (red) and dateAc (black)",
            sub=paste("Quality of row representation (cos2) in correspondence analysis: ",arrondi(cerardat$obs_ca_eval[i],2)))
 
@@ -657,3 +662,4 @@ extract_results = function(cerardat,
   }
   print(paste0(getwd(),"/",path))
 }
+

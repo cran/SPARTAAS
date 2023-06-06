@@ -47,7 +47,7 @@ hclustcompro_select_alpha(
 A criterion for choosing \eqn{\alpha \in [0;1]} must be determined by balancing the weights between the two sources of information in the final classification. To obtain \eqn{\alpha}, we define the following criterion
 \deqn{CorCrit_\alpha = |Cor(dist_{cophenetic},D_1) - Cor(dist_{cophenetic},D_2)|}  \deqn{Equation (1)}
 The \eqn{CorCrit_\alpha} criterion in (1) represents the difference in absolute value between two cophenetic correlations (cophenetic correlation is defined as the correlation between two distance matrices. It is calculated by considering the half distance matrices as vectors. It measures how faithfully a dendrogram preserves the pairwise distances between the original unmodeled data points). The first correlation is related to the comparison between \eqn{D_1} and the ultrametric distances of the clustering with \eqn{\alpha} fixed, while the second compares \eqn{D_2} and the ultrametric distances of the clustering with \eqn{\alpha} fixed. Then, in order to compromise between the information provided by \eqn{D_1} and \eqn{D_2}, we decided to estimate \eqn{\alpha} with \eqn{\hat{\alpha}} such that:
-\deqn{\hat{\alpha} = \underset{\alpha}{argmin} CorCrit_\alpha}
+\deqn{\hat{\alpha} = min CorCrit_\alpha}
 \deqn{Equation (2)}
 
 \strong{Resampling strategy:}\cr\cr
@@ -59,7 +59,7 @@ Intuitively, by varying \eqn{\alpha} between 0 and 1, we will be able to identif
 Let \eqn{CorCrit_\alpha^{(c)}} define the same criterion as in (1), where \eqn{D_1} and \eqn{D_2} are replaced by \eqn{D_1^{(c)}} and \eqn{D_2^{(c)}} respectively.
 The estimated \eqn{\alpha} is the mean of the estimated values for each clone.\cr
 For each clone \eqn{c}:
-\deqn{\hat{\alpha}^{(c)} = \underset{\alpha}{argmin}   CorCrit_\alpha^{(c)}}
+\deqn{\hat{\alpha}^{(c)} = min   CorCrit_\alpha^{(c)}}
 \deqn{Equation (3)}
 \eqn{\hat{\alpha}^*} is the mean of \eqn{\hat{\alpha}^{(c)}}. In the same spirit as confidence intervals based on bootstrap percentiles (Efron & Tibshirani, 1993), a percentile confidence interval based on replication is also be obtained using the empirical percentiles of the distribution of \eqn{\hat{\alpha}^{(c)}}.
 \deqn{\hat{\alpha}^* = \frac{1}{n(n-1)} \sum{ \hat\alpha^{(c)} }}

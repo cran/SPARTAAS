@@ -99,6 +99,7 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
   for (i in 1:length(x[1,])){
     if(!(sum(x[,i]) == arrondi(sum(x[,i])))){stop("The data frame must contains integers.")}
   }
+  ens = 0
   .data <- c()
   Cluster <- c()
   labels <- factor(rownames(x),levels = rev(unique(rownames(x))))
@@ -190,7 +191,7 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
   #ggplot
   p <- ggplot(data = data) +
     facet_grid( ~type, scales = "free", space = "free_x") +
-    geom_col(aes_string(x = "ens", y = "frequency", fill = "legend"), width = 1) +
+    geom_col(aes(x = ens, y = frequency, fill = legend), width = 1) +
     scale_x_discrete(labels = rev(rownames(x))) +
     coord_flip() +
     scale_fill_manual(values = color,

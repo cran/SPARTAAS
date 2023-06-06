@@ -9,7 +9,7 @@ importFrom("grDevices",       "colorRampPalette","recordPlot","rainbow","graphic
 importFrom("tidyr",           "gather")
 importFrom("dplyr",           "mutate","group_by","summarise_all","funs","ungroup","inner_join","arrange",
                               "summarise","first","last","filter")
-importFrom("ggplot2",         "ggplot","geom_bar","geom_col","aes_string","aes","ggtitle","labs","xlab",
+importFrom("ggplot2",         "ggplot","geom_bar","geom_col","aes","ggtitle","labs","xlab",
                               "ylab","facet_wrap","position_stack","coord_flip","facet_grid","scale_fill_manual",
                               "scale_y_continuous","theme","element_text","element_blank","scale_x_discrete",
                               "geom_segment","margin","geom_point","scale_colour_gradientn","geom_line",

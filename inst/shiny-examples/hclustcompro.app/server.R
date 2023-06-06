@@ -687,17 +687,17 @@ server <- function(input, output, session) {
                 h3("Select number of axis:",style="text-align:center;"),hr(style="border-color: #222222;"),
 
                 HTML('<p>Our first source of information is a contingency table. We need to construct a distance matrix from this table. We perform a correspondence analysis (CA) on the contingency table and then use the distances of the components (chi-square metric).</p>
-                     <p>You must choose the number of axes (CA components) to be used to construct the distance matrix.</p>
-                     <p>Examination of the eigenvalues makes it possible to determine the number of principal axes to be considered. The eigenvalues correspond to the amount of information retained by each axis.</p>
-                     <p>A heuristic method is often used: one constructs the graph of eigenvalues sorted in descending order and retains the eigenvalues (and associated principal components) that precede the first "elbow".</p>
-                     <p>Another approach is based on maintaining an approximation quality of the initial data, measured by the explained inertia rate (e.g. 85%). As many axes as necessary are chosen so that the sum of the corresponding eigenvalues exceeds the targeted inertia rate.</p>'),
+                     <p>It is necessary to choose the number of axes (CA components) to be used to construct the distance matrix.</p>
+                     <p>By examining the eigenvalues, it is possible to determine the number of principal axes to be considered. The eigenvalues correspond to the amount of information retained by each axis.</p>
+                     <p>A heuristic method is often used: one constructs the graph of eigenvalues sorted in descending order and retains the eigenvalues (and associated principal components) preceding the first "elbow".</p>
+                     <p>Another approach is based on maintaining an approximation quality of the original data, measured by the explained inertia rate (e.g. 85%). As many axes as necessary are chosen so that the sum of the corresponding eigenvalues exceeds the target inertia rate.</p>'),
                 footer = tagList(
                   actionButton("nextCA", "OK")
                 )
     )
   }
   selectaxis <- function() {
-    modalDialog(title="Select number of axis:",size=c("l"),
+    modalDialog(title="Select number of axes:",size=c("l"),
                 div(style="height:15px;"),
                 h3("Select number of axis:",style="text-align:center;"),hr(style="border-color: #222222;"),
 

@@ -77,7 +77,7 @@ ui <- fluidPage(useShinyjs(),withMathJax(),style="padding-top: 150px;",theme = s
                             h1("R Package:"),
                             br(),
                             HTML("<p>This method is part of the <a target='_blank' href='https://spartaas.gitpages.huma-num.fr/r-package/index.html'>SPARTAAS</a> package.</p>
-                                                        <p>If you are interested you can install our R package avaible on the <a target='_blank' href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a target='_blank' href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
+                                                        <p>If you are interested you can install our R package available on the <a target='_blank' href='https://cran.r-project.org/package=SPARTAAS'>CRAN</a> and on <a target='_blank' href='https://github.com/arliph/SPARTAAS'>GitHub</a>.</p>
 
                                                         ")
                ),
@@ -122,8 +122,31 @@ the rate of accumulation.</p>
               tabsetPanel(id = "tabsetperso",type="tabs",
                       tabPanel(id="tab11","Overview",
                                sidebarPanel(width = 5,
-                                            h4("Import your data:"),actionButton("data",
-                                                                                 icon("import", lib = "glyphicon")),
+                                            fluidRow(
+                                              h4("Import your data:"),
+                                              column(10,
+                                                     actionButton("data",icon("import", lib = "glyphicon"))
+                                              ),
+                                              column(1,
+                                                     # Help
+                                                     dropdownButton(
+                                                       h3("data format"),
+                                                       hr(style="border-color: #222222;"),
+                                                       HTML("<p>The data are in the form of two datasets.</p>
+                                                       <p>1/ Reference data: count table plus a first column with dates, if known.</p>
+                                                       <p>2/ Supplementary data: count table (same number of columns) plus a column for dates, if known.</p>
+                                                       <p>Example:</p>
+                                                       <img style='width:280px;' src='data_exemple.png' alt='data'>"),
+                                                       circle = TRUE, status = "danger", icon = icon("question"), width = "300px",
+                                                       size = "sm",right=TRUE,
+                                                       tooltip = tooltipOptions(title = "Help", placement = "top")
+                                                     )
+                                                     # Help
+                                              )
+                                            ),
+
+
+
                                             div(style="height:20px;"),
                                             HTML("
 <p>In settings:</p>

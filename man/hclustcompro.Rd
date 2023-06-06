@@ -16,7 +16,7 @@ hclustcompro(
 \description{
 Compromised Hierarchical bottom-up clustering method.
 The method uses two sources of information. The merging of the two data sources is done by a parameter (\eqn{\alpha}) that allows to weight each source.
-\deqn{D_\alpha = \alpha * D_1 + (1-\alpha) * D_2}\cr
+\deqn{D_\alpha = \alpha D_1 + (1-\alpha) D_2}\cr
 }
 
 \arguments{

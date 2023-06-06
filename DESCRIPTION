@@ -2,7 +2,7 @@ Package: SPARTAAS
 Type: Package
 Title: Statistical Pattern Recognition and daTing using Archaeological
         Artefacts assemblageS
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: c(person("Arthur","Coulon", role = c("aut","cre"),
                      email = "arthur-coulon@outlook.fr"),
              person("Lise","Bellanger", role = "aut",
@@ -33,11 +33,11 @@ Imports: FactoMineR,
 Suggests: knitr, rmarkdown
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2023-05-31 15:33:43 UTC; arcoulon
+Packaged: 2023-06-06 12:01:55 UTC; arcoulon
 Author: Arthur Coulon [aut, cre],
   Lise Bellanger [aut],
   Philippe Husi [aut],
   Bruno Desachy [ctb],
   Benjamin Martineau [ctb]
 Repository: CRAN
-Date/Publication: 2023-05-31 22:20:18 UTC
+Date/Publication: 2023-06-06 13:10:09 UTC

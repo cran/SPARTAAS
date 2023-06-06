@@ -8,15 +8,15 @@ cerardat
 The methodology is based on a statistical and visual approach using two estimated density curves to date each archaeological context. The statistical procedure required two steps, each leading to the construction of a density curve. The first allowed us to estimate a date corresponding to the terminus post quem of the context, a cursor reflecting an event dated in calendar time. This statistical tool allows the archaeologist to easily visualise and analyse chronological patterns.
 }
 \usage{
-cerardat(df, col.sup, date, nf = NULL, confidence = 0.95, graph = T)
+cerardat(df, row.sup, date, nf = NULL, confidence = 0.95, graph = T)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{df}{
-The data (data.frame) is a contingency table with the technical groups in the rows and the observations in the columns.
+The data (data.frame) is a contingency table with the observations in the rows and the technical groups in the columns.
 }
-  \item{col.sup}{
-Index of supplementary columns in df (vector).
+  \item{row.sup}{
+Index of supplementary rows in df (vector).
 }
   \item{date}{
 The dates of each observation or NA (vector).
@@ -34,7 +34,7 @@ logical to display the plots or not.
 
 }
 \details{
-The corpus data is a contingency table with the technical groups in the rows and the observations in the columns. There are two types of observations: the reference corpus observations and the supplementary observations. The supplementary columns (observations) are identified by the argument `col.sup`.
+The corpus data is a contingency table with the observations in the rows and the technical groups in the columns. There are two types of observations: the reference corpus observations and the supplementary observations. The supplementary rows (observations) are identified by the argument `row.sup`.
 
 \strong{step 1: modelling events dated in calendar time (dateEv)}\cr
 This step involves estimating the date of an event recorded in the ground (an archaeological context for the archaeologist) from the pottery assemblage of which it is composed, by fitting a regression model that relates a known date in calendar time, such as the date of issue of a coin, to its pottery profile. The reference corpus used to fit the regression model. We then used the previously fitted model to calculate a predicted value for contexts not included in the reference corpus, sometimes stratigraphically separated or poorly documented, with a 95\% confidence interval for the predicted date.
@@ -94,10 +94,11 @@ L. BELLANGER
 P. HUSI
 }
 \examples{
+\donttest{
 data("datacerardat")
 
 resultat = cerardat(df = datacerardat$df,
-           col.sup = datacerardat$col.sup,
+           row.sup = datacerardat$row.sup,
            date = datacerardat$date,
            nf = NULL,
            confidence = 0.95,
@@ -140,6 +141,7 @@ plot(resultat,
 
 #You can extract the plots and find them in the directory :
 paste0(getwd(),"/figures")
-#With the extract_results() function
-
+#With the 'extract_results' function
+#extract_results(resultat,width=480, height=480, path="figures")
+}
 }

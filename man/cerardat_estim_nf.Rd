@@ -8,15 +8,15 @@ Number of axes to keep
 Estimate the correct number of axes to keep in the regression model.
 }
 \usage{
-cerardat_estim_nf(df, col.sup, date)
+cerardat_estim_nf(df, row.sup, date)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{df}{
-The data (data.frame) is a contingency table with the technical groups in rows and the observations in columns.
+The data (data.frame) is a contingency table with the observations in rows and the technical groups in columns.
 }
-  \item{col.sup}{
-Index of supplementary columns in df (vector).
+  \item{row.sup}{
+Index of supplementary rows in df (vector).
 }
   \item{date}{
 The dates of each observation or NA (vector).
@@ -47,7 +47,7 @@ P. HUSI
 \examples{
 library(SPARTAAS)
 data(datacerardat)
-res = cerardat_estim_nf(datacerardat$df, datacerardat$col.sup, datacerardat$date)
+res = cerardat_estim_nf(datacerardat$df, datacerardat$row.sup, datacerardat$date)
 
 #Number of axes to keep (minimal PRESS value)
 res$nf

@@ -50,10 +50,11 @@ P. HUSI
 }
 
 \examples{
+\donttest{
 data("datacerardat")
 
 resultat = cerardat(df = datacerardat$df,
-           col.sup = datacerardat$col.sup,
+           row.sup = datacerardat$row.sup,
            date = datacerardat$date,
            nf = NULL,
            confidence = 0.95,
@@ -69,4 +70,5 @@ resultat = cerardat(df = datacerardat$df,
 
 #You can extract the plots and find them in the directory :
 paste0(getwd(),"/figures")
+}
 }
