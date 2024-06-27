@@ -12,7 +12,7 @@ library(shinythemes)
 library(shinycssloaders)
 library(plotly)
 library(scatterD3)
-library(caret)
+#library(caret)
 
 
 ui <- fluidPage(useShinyjs(),withMathJax(),style="padding-top: 150px;",theme = shinytheme("flatly"),
@@ -138,7 +138,7 @@ the rate of accumulation.</p>
                                                        <p>Example:</p>
                                                        <img style='width:280px;' src='data_exemple.png' alt='data'>"),
                                                        circle = TRUE, status = "danger", icon = icon("question"), width = "300px",
-                                                       size = "sm",right=TRUE,
+                                                       size = "sm",right=FALSE,
                                                        tooltip = tooltipOptions(title = "Help", placement = "top")
                                                      )
                                                      # Help

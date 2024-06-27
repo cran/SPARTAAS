@@ -86,7 +86,7 @@ EPM <- function(x) {
   return(TabEcart)
 }
 
-plot_EPPM <- function(x,show,permute,col_Weight) {
+plot_EPPM <- function(x,show,permute) {
   if(is.table(x)){
     x <- as.data.frame(x)
     x <- matrix(x[,3],
@@ -184,7 +184,7 @@ plot_EPPM <- function(x,show,permute,col_Weight) {
     frequency[k,] <- frequency[k,] / rowsum[k]
   }
 
-  cat(blue("\nContingency table:\n"))
+  cat("\nContingency table:\n")
   print(contingency)
 
 
